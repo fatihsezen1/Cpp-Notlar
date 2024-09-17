@@ -26,13 +26,13 @@
 
   int main() 
   {
-     enum Color mycolor;
-		 int x = 2;
+	enum Color mycolor;
+	int x = 2;
 
-		 enum Pos pos = Gray;
-		 mycolor = 5;
-		 mycolor = x;
-		 int ival = mycolor;
+	enum Pos pos = Gray;
+	mycolor = 5;
+	mycolor = x;
+	int ival = mycolor;
   }
 
 - C++'ta enum turlerinden tam sayi turlerine ortulu donusum var. Bu ozellik Necati Ergin'e gore tam bir utanc kaynagi ve
@@ -48,8 +48,57 @@
 		int x = mycolor;	// enum turlerinden diger turlere yok, temel turlere ortulu donusum var
 	}
 
+- Bu durumu ortadan kaldirmak icin enum Class eklendi (scoped enums). Artik her zaman bu enum turlerini kullanacagiz.
+  Bu enum turlerini ileride isleyecegiz.
+
+- C23'e kadar C'de enum turu int idi. c23 ile c'ye de eklenen underlying type ozelligini kullanarak enumartorlerin tipini biz 
+  belirleyebiliyoruz.
+  Ornegin;
+
+  enum Color : unsigned char {White, Gray, Red};
+
+- C++ standartlarinda main fonksiyonunun int olmasi zorunlu. Ama derleyiciler yine de derliyor.
+
+- C++'ta main fonksiyonunda return 0; yazmazsan derleyici kendisi yaziyor.
+
+- int foo(void)
+  {
+        //..
+  }
+
+  Bu fonksiyon C'de undetermined value dondurur. ancak C++'da sentaks hatasi. (return yok)
+
+- C'de main icinde main recursive olarak cagrilabiliyor. Ancak C++'ta bu cagrim sentaks hatasi.
+
+- C++'ta;
+  T x; //default initialization. Indetermined value ile hayata gelir. Bu artik kotu bir teknik.
+
+- zero-initilization isminde initilization gecmesine ragmen bir ilkdeger kategorisi degil!!!! 
+  Bazi init kategorilerinde uygulanan bir surec. (sifirla, nullptr ile, false ile ilk deger vermek)
+
+  static omurlu degiskenler zero-init sureci... 
+
+- T x = expr;         //artik buna copy initialization diyoruz.
+
+- int x(7);        //bu c'de yok. Direct initilization diyoruz.
+
+- uniform initilization(standartlardaki ismi) == brace initilization(populer ismi)
+  Bunu direct initilizationda kullanmak cok daha yaygin. Hem her seye boyle ilkdeger verebiliyoruz hem de daraltici 
+  donusume (narrowing conversion) izin vermiyor.
+
+  Ornegin;
+        int x = val;        //copy init
+        int y(val);        //direct init
+        int z{val};        //direct list init
+
+- bazi ifadeler hem bir function prototype hem de variable definition anlamina gelebiliyorsa burada fonksiyon bildiriminin 
+  onceligi var.!!! Scot-meyers reis buna bir tanim uydurmus -> most vexing parse
+
+  Bir Most Vexing Parse ornegi;
+
+  
+  
 
 
-
-
+         
 
