@@ -96,9 +96,60 @@
 
   Bir Most Vexing Parse ornegi;
 
-  
-  
+        class A {
+
+	};
+	
+	class B {
+		B(A);
+	};
+	
+	int main()
+	{
+		B bx(A());	//burada ismi bx olan bir degisken tanimlanmiyor. Bu bir fonksiyon BILDIRIMI!
+	}
+	
+	Bunun bir fonksiyon bildirimi yerine bir degisken tanimlamasi olmasi icin UNIFORM INITIALIZER SYNTAX kullanmamiz gerekiyordu.
+	Yani su sekilde:
+	
+	B bx{ A() };
+	  
+Ozetle neden uniform init sentaksa ihtiyac duyulmus?
+	*uniform olmasi
+	*daraltici donusume izin vermemesi
+	*most vexing parse'a izin vermemesi
 
 
+- value initialization:
+  int x{};	// value initializationun farki, ilk basamak olarak zero-init kullanilmasi. Burada x sifir degerinde. yani cop deger yerine sifir ile
+   		   baslatmis olduk. 
+
+- nullptr sabitinin turu nullptr_t. nullptr nullptr_t turunden bir SABIT.
          
+- unaveluated context -> islem kodu uretilmeyen baglam
+  ne demek bu unaveluated context?
+  oyle yerler var ki dilin kurali geregi o ifade icin islem kodu uretilmiyor. C dilindeki tek ornegi sizeof operatoru:
 
+  int x = 10;
+  size_t sz = sizeof(x++);	// burada x degiskeninin degeri hala 10
+
+  sizeof operatorunun operandi olan ifade icin islem kodu uretilmez.
+
+  C++'ta bu konu bir kac farkli yerde karsimiza cikiyor. Bu durum tanimsiz davranis dogurmuyor.
+  C++ icin ornekler:
+
+  int(*p)[10] = malloc(sizeof(*p));
+	soru: malloc fonksiyonuna arguman olarak ne gectik?
+	cevap: *p ifadesinin degeri int*[10] yani 10 carpi sizeof int degerini gectim. Buradaki problem p'yi dereference etmis olduk. ama p henuz cop degerde. ama sizeof icinde
+		oldugu icin unevaluated context oluyor, yani tanimsiz davranis olusturmuyor. Cunku sizeof icin islem kodu uretilmez.
+
+  int a[4] = {0};
+  sizeof(a[5]);		// a[5] normalde tanimsiz davranis ama islem kodu uretilmedigi icin unevaluated context.
+
+ int *ptr = nullptr;
+ decltype(*ptr);	// burada da unaveluated context oldugu icin nullptr'yi dereference etmek sorun olusturmuyor.
+	
+
+##3. Ders##
+
+ 
