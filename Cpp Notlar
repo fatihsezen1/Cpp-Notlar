@@ -1,0 +1,53 @@
+##1. Ders## ve ##2. Ders##
+- C dilinde static omurlu degiskenlere ilk deger veren ifadeler constant expression olmak zorunda fakan C++'ta boyle bir zorunluluk yok.
+  Ornegin;
+  int g_x = foo();  //C'de gecersiz, C++'da gecerli 
+
+- C dilinde bir structure'in gecerli olmasi icin en az 1 elemani olmasi lazim. Fakat C++'ta 'empty class' legal ve cok kullaniliyor.
+
+- C dilinde struct gibi user-defined turlerde degisken tanimlarken struct anahtar sozcugunu de kullanmak gerekiyor.
+  Ornegin;
+  struct person ali;   //C'de boyle
+  person ali;   //C++'ta boyle de olur. (ustteki gibi de olur)
+
+- C++'ta compound literal yok, C'de var.
+  Ornegin;
+  (int[5]) {1,3,4,5,6};
+
+- C'de enum turlerinden temel turlere ve tersine ortulu donusum var.
+  Ornegin asagidaki kod C'de legal;
+  
+  enum Color {
+    White, Gray, Red
+  };
+  enum Pos {
+    Open, Ajar, Close
+  };
+
+  int main() 
+  {
+     enum Color mycolor;
+		 int x = 2;
+
+		 enum Pos pos = Gray;
+		 mycolor = 5;
+		 mycolor = x;
+		 int ival = mycolor;
+  }
+
+- C++'ta enum turlerinden tam sayi turlerine ortulu donusum var. Bu ozellik Necati Ergin'e gore tam bir utanc kaynagi ve
+	dilin genclik gunahi. Ornegin;
+
+	#include <iostream>
+	enum Color {
+		White, Gray, Red
+	};
+	int main()
+	{
+		Color mycolor = Gray;
+		int x = mycolor;	// enum turlerinden diger turlere yok, temel turlere ortulu donusum var
+	}
+
+
+
+
