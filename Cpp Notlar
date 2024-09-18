@@ -152,4 +152,159 @@ Ozetle neden uniform init sentaksa ihtiyac duyulmus?
 
 ##3. Ders##
 
+- Referans semantigi
+
+  C'deki pointerlar yerine C++ dilinde sunlar kullanilabilir:
+  pointer, referans, smart pointer (bir sinifla temsil edilir), iteratorler
+
+  3 tane referans kategorisi var:
+
+  L value reference
+  R value reference
+  forwarding reference (universal ref.)
+
+  hatirlatma:
+
+  expression (ifade nedir)
+  10
+  x
+  x + y
+
+  bunlarin sonuna terminator atomu yani ; koyarsak statement olur.
+
+  x;  -> mesela bu bir expression statement
+
+  her ifadenin bir value kategorisi var.
+  modern C++ ile tasima semantigi icin bu value kategorisi biraz degisti:
+
+  primary value category
+  	L value (Left val.)
+	PR value (pure val.)
+	X value (expiring val.)
+
+  combined value category
+	L value	 ya da	X value  -> 	GL value
+	PR Value ya da 	X value  ->	R value
+
+
+	   glvalue     rvalue			(combined value cat.)
+	    /  \       /  \
+	   /    \     /    \
+	lvalue   xvalue    prvalue		(primary value cat.)
+
+
+	C ve C++'dan bazi farkliliklar:
+	
+	++x
+	--y 
+	
+	ifadelerinin deger kategorileri C'de R value, C++'ta L value
+	
+	ya da 
+	
+	x, y
+	Bu ifade operandlari L value olsa bile C'de L value degil ancak C++'ta ikinci operator L value ise ifade L val expr olusturuyor.
+
+
+  Referanslara devam edelim.
+
+  int x = 10;
+  int& r{x};	//alias, r demek x demek...
+
+- bir referans bir degiskene bind oldugunda sonra baska degiskene bind edilemez.
+- referanslar default initialize edilemez. Ilkdeger vermek zorunludur.
+- yukaridaki kodda &r demek x'in adresi demek.
+- int* const p = &x; -> const pointer to int, top level const, right const yani pointerin kendisi const. gosterdigi nesne const degil.
+- const int* p = &x; ->  pointer to const int, low level const, left const yani pointerin kendisi const degil. gosterdigi nesne const.
+- const int* const p = &x; ->  const pointer to const int. gosteren de gosterilen de const.
+
+- iste L value referans sunun karsiligi 
+	int x = 19;
+	int* const p = &x;	//L val ref.ler rebindable degil bu yuzden const pointer to int gibi dusunebilirisin.
+	int& r{x};
+ 
+- ornek:
+	int x{};
+	int* p = &x;
+	//p'nin yerine gececek r isimle L value ref tanimlarsak;
+	int* & r{p};
+
+	++*r;	//r demek p demek, dereferans p demek x demek, dolayisiyla x'i 0'dan 1'e arttirmis oluruz.
+
+
+- T foo();	-> boyle bir fonksiyona yapilan cagri ifadesi R value expression
+- T& foo();	-> boyle bir fonksiyona yapilan cagri ifadesi L value expression
+
+	int g_x = 11;
+	int& foo()
+	{
+		//..
+		return g_x;
+	}
+	int main()
+	{
+		foo() = 234; //atamayi g_x degiskenine yapmis oluyorum.
+		int& r {foo()};	
+	}
+
+- dolayisiyla asagidaki gibi fonksiyonlara mutator, set-function ya da setter deniyor
+	void func(T &);
+
+
+
+- Oyle bir referans tanimla ki a'ya bind edilsin:
+	int a[5] {0};
+	//a dizisini gosteren pointer -> int(*p)[5] = &a;
+	int(&r)[5] = a;
+
+
+
+- const correctness = const olmasi gereken her sey const olmali
+
+	ornegin fonksiyon parametresi const olmasi gerekirken olmazsa const nesneleri arguman gecemeyiz. Ornegin;
+
+	#include <iostream>
+	using namespace std;
+	
+	void print_array(int* p, size_t size);
+	
+	int main()
+	{
+		const int a[5]{};
+		print_array(a, 5);	//error: 'void print_array(int *,size_t)': cannot convert argument 1 from 'const int [5]' to 'int *
+	}
+
+
+	// iste const bir yerden bile eksik olursa her yere nufuz eder. Derleyici optimizasyon olanaklarini kisitlar.
+
+
+- int x = 10;
+  const int& r = x;	//salt okunur bir referans. Amac degistirmeye yonelik degilse bu kullanilmali. (Accessor)
+
+- int& r{10}; 	//sentaks hatasi! neden? Cunku 10 L value expression degil.
+- const int& r{10}; 	//sentaks hatasi degil. neden?
+	bu durumda r referansi bu sabite BAGLANMIYOR. Derleyici bir TEMPORARY OBJECT olusturuyor. 
+- double x{2.6};
+  const int& r = x;		//burada sentaks hatasi yok. temporary object 2 degerini alir. const olmasa sentaks hatasi olurdu. 
+	
+SONUCTA;
+parameteresi T & olan fonksiyon sadece L Value expression kabul eder,
+parameteresi const  T & olan fonksiyon hem R value expr hem de  L Value expression kabul eder.
+
+
+
+- C++11 ile gelen onemli 5-6 eklentiden bazilari : tasima semantigi, lambda ifadeleri, perfect forwarding
+  bunlarda R value referans kategorisi kullanilacak.
+
+- T && seklinde kullanilan referans R value referans belirtir.
+- R value referans R value expression'a baglaniyor. L value expressiona baglanamiyor.
+- R value expressionun L value referans baglanmasi sentaks hatasidir.
+- L value expressionun R value referans baglanmasi sentaks hatasidir.
+
+ozetle:
+T &      ->	sadece L value expression'a baglanir.
+const T& -> 	hem L hem R value expressiona baglanir.
+T &&     -> 	sadece R value expression'a baglanir. 
+
+##4. Ders##
  
