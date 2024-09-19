@@ -307,4 +307,137 @@ const T& -> 	hem L hem R value expressiona baglanir.
 T &&     -> 	sadece R value expression'a baglanir. 
 
 ##4. Ders##
- 
+ soru: asagidaki kodda bir problem var mi?
+	
+	#include <iostream>
+	
+	int& get_value()
+	{
+		std::cout << "enter an integer: ";
+		int x{};
+		std::cin >> x;
+		return x;
+	}
+	
+	int main()
+	{
+		int& ri = get_value();
+		std::cout << ri << '\n';
+		return 0;
+	}
+	
+	cevap: evet, otomatik omurlu nesnenin referansini donduruyor. 20. satirda o degisken hakkin rahmetine kavusmus oluyor.
+	
+-default argument (varsayilan arguman):
+
+- ornegin 
+	int foo(int, int, int = 10);
+- varsayilan argumanlarin hepsi en saga dayali olmasi gerekiyor.
+  ornegin 
+	int foo(int, int, int = 10, int ); // bu bir sentaks hatasi
+
+- varsayilan arguman hem bildirimde hem tanimda olsa SENTAKS HATASI olacakti. Sadece fonksiyon bildiriminde yaziyoruz genelde.
+- fonksiyonun parametresi referans olup varsayilan arguman alabilir.
+- fonksiyonun  varsayilan argumani fonksiyon cagrisi alabilir.
+- birden fazla fonksiyon bildirimi yapilabilir. bu bildirimler kumulatif olarak ele alinir. 
+- daha onceki parametreler daha sonraki parametrelerde varsayilan arguman olarak kullanilamaz.
+
+
+
+- type deduction ( tur cikarimi )
+- auto type deduction
+- C'deki auto otomatik omurlu oldugunu belirtmek icin olan bir keyword. Bu atil durumdaki sozcuge C++'ta yepyeni bir anlam kazandirilmis.
+- TUR CIKARIMI TANIMLANAN DEGISKEN ICIN MI YAPILIYOR YOKSA AUTO SOZCUGU ICIN MI YAPILIYOR ? 
+	CEVAP: TUR CIKARIMI AUTO ICIN YAPILIYOR.
+
+- Ornegin;
+	auto x		// auto icin yapilan cikarim int olsaydi, x'in turu de int olurdu
+	auto& x		// auto icin yapilan cikarim int olsaydi, x'in turu int& olurdu
+	auto *x		// auto icin yapilan cikarim int olsaydi, x'in turu int* olurdu
+
+	YANI AUTO'YA KARSILIK GELEN TURLE DEGISKENIN TURU AYNI OLMAK ZORUNDA DEGIL!
+
+
+- value kategory IFADEYI NITELEYEN BIR KAVRAM
+
+	int x = 5;
+	soru: x'in value kategorisi nedir?
+	cevap: x'in value kategorisi yok ki? x bir degisken. IFADELERIN VALUE KATEGORISI OLUR. DEGISKENIN VALUE KATEGORISI OLMAZ.
+
+	x -> bu ifadenin value kategorisi L value expression'dur.
+	5 -> bu ifadenin value kategorisi PR value expression'dur.
+
+- bir IFADENIN TURU REFERANS TURU OLAMAZ.
+	ornek:
+	int a = 5;
+	int& r = a;
+
+	r -> bu ifadenin turu int
+
+- auto ile belirtilen degisken default initialize edilemez. Ya direct initialize edilecek ya da copy initialize edilecek.
+
+- auto'da 3 tane kural seti var:
+
+	1- auto x = expr;
+	2- auto &x = expr;
+	3- auto &&x = expr;
+
+1- auto x = expr
+
+	auto x = 10;	-> bu durumda auto'nun karsiligi olan tur dogrudan ilkdeger veren ifadenin turu.
+	
+	const int x = 10;
+	auto y = x;	-> burada constluk duser. autonun karsiligi int olur.
+
+	int x = 19;
+	int& r = x;
+	auto y = r;	-> burada y'nin turu int. CUNKU BIR IFADENIN TURU REFERANS OLAMAZDI. R IFADESININ TURU INT.
+
+	eger boyle olmasaydi asagidaki kodun ciktisi 10 degil 999 olurdu. ama ciktisi 10:
+
+	#include <iostream>
+	using namespace std;
+	int main()
+	{
+		int x = 10;
+		int& r = x;
+		auto y = r;
+		y = 999;
+		cout << "x =" << x << '\n';
+	}
+
+	Bir ornek daha :
+
+	int x = 123;
+	const int& r = x;
+	auto y = r;
+
+	y const da degil  int& de degil. y dumduz int.
+	
+	int ar[5]{};
+	auto x = ar;	-> burada array decay ile aslinda &ar[0] yazilmis olur yani x int* olur.
+	
+	const int ar[5]{};
+	auto x = ar;	-> burada array decay ile aslinda const &ar[0] yazilmis olur yani x const int* olur. 
+
+	auto p = "fatih";	-> array decay olacak ve p const char* olacak
+
+	int foo(int);
+	auto x = foo;	-> int (*)(int);
+
+2- auto &x = expr;
+
+
+	4. ders 1.24'te kaldim
+
+
+
+
+
+
+
+
+
+
+
+
