@@ -425,19 +425,233 @@ T &&     -> 	sadece R value expression'a baglanir.
 	int foo(int);
 	auto x = foo;	-> int (*)(int);
 
+	ozetle -> constluk duser
+		  referanslik duser
+		  array decay uygulanir
+		  function to pointer conversion uygulanir
+		  
 2- auto &x = expr;
 
+	auto& r = expr;	-> r l value referans olmali
+	auto& r = 10; 	-> sentaks hatasi.!.!.
 
-	4. ders 1.24'te kaldim
+	const int x = 5;
+	auto& r = x;	-> const'luk dusmuyor. auto yerine const int gelecek.
+
+	array decay de olmuyor
+
+	int ar[5]{1,2,3,4,5};
+	auto x = ar; 	// x int* olacakti
+	auto &r = ar;	// r int[5] olacak yani int(&r)[5]
+
+	const int ar[5]{1,2,3,4,5};
+	auto &r = ar;	// r -> const int(&r)[5]
+
+	auto x = "fatih";	-> array decay var. x const char*
+	auto& r = "fatih";	-> array decay yok. r const char(&r)[6]
+	
+	int foo(int);
+	int main()
+	{
+		auto x = foo;		-> x'in turu int(*x)int		... yani auto icin cikarim int(*)(int)
+		auto& r = foo;		-> r'nin turu int(&r)(int)	... yani auto icin cikarim int(int)
+	}
+
+	ozetle -> constluk dusmez
+		  array decay uygulanmaz
+		  funtion to pointer conversion uygulanmaz
+		  
+		 
+3- auto &&x = expr; (universal reference(scot meyers demis) ya da forwarding referans (standartlarin terimi) denir)
+
+	sag taraf referansi degil. type deduction ile && kullanilinca universal referans oluyor.
+
+	auto&& r = x;	-> ilkdeger veren ifadenin ne olduguna bagli olarak r icin elde edilecek nihai tur ya L value referans
+			   ya da R value referans turu olacak. 3. bir ihtimal yok.
+
+	auto&& r = x;	//initializer L value yani asagidakine donusecek
+	int& r = x;
+
+	auto&& r = x + 3;	//initializer R value yani asagidakine donusecek
+	int&& r = x;
+
+	bu iki ornekte auto icin cikarilan turden bahsetmedik. r'nin turunden bahsettik.
+
+
+	simdi gelelim auto tarafina... auto icin yapilan cikarim yine ilkdeger veren ifadenin ne olduguna bagli.
+
+	ilkdeger veren ifadenin turu L value referans ise auto cikarimi -> T&
+	ilkdeger veren ifadenin turu R value referans ise auto cikarimi -> T
+
+	int x = 10;
+	auto &&r = x; //oldugunda auto icin tur cikarimi T& yani...
+	int& &&r = x; //referansa referans gibi bir durum olustu. ancak referansa referans olmaz. burada 
+			derleyici REFERENCE COLLAPSING kuralini devreye sokuyor. Sadece burada degil birkac yerde daha karsimiza cikiyor.
+
+	
+	T&	&	->	T&
+	T&	&&	->	T&
+	T&&	&	->	T&
+	T&&	&&	->	T&&
+
+	int&    &&r      =       x;	-> yani burada tur T& oluyor. 
+	
 
 
 
 
 
+- decltype'tan da biraz bahsedelim.
+- auto'da bir degisken tanimlayip ilkdeger verme zorunlulugu vardi.
+- decltype kullanirken bir degisken tanimlamak gerekmiyor. tur gereken her yerde decltype ile cikarimi yapilan bir turu kullanabiliriz.
+- decltype(10)
+- decltype(x)
+- decltype(x + 5)
+- decltype(x.y)
+- seklinde kullanilabilir.
+
+- decltype'ta iki ayri kural seti var.
+- ilk kurali basit, burada operandi bir isim formunda olacak. buna -> ve . operatoru ile erisilen isimler dahil.
+	- decltype(a)
+	- decltype(x)
+	- decltype(a.y)
+	- decltype(x->y)
+	
+- ikinci kural seti isim olmayan operandlar oldugunda uygulanir. 
+	- decltype(10)
+	- decltype(x + 11)
+	- decltype((x)) // burada artik isim formunda degil. paranteze aldigim icin ifade formunda ele alacak ve ikinci
+			   kural seti uygulanacak.
+
+
+- 1. Kural seti, yani operandi isim formunda olanlar icin
+	int x{};	
+	decltype(x);	-> bunu artik int yerine kullanabiliriz.
+
+	const int a {123};
+	decltype(a);	-> const int (constluk falan dusmez)
+
+	int& r = x;
+	decltype(r);	-> int& turunden. 
+
+
+	const int& r = x;
+	decltype(r);	-> const int& turunden.
+
+
+	int ar[40] {};
+	decltype(ar);	-> int[40] turunden. 
+
+	
+
+	struct nec {
+		int x;
+		double* p;
+	};
+	nec mynec;
+	decltype(mynec.p);	-> double* turu
+
+	Yani operand olarak aldigi isim nasil bildirilmisse direkt o turden... 
+
+	
+- 2. Kural seti, yani operandi isim formunda olmayanlar icin
+	
+	decltype(expr) -> buradan elde edilecek ifadenin turu expr'in primary value kategorisine bagli. PR value, P
+
+	value category of the expression
+
+	operand olan ifadenin turu			elde edilecek tur
+	PR						T
+	L						T&
+	X						T&&
+
+
+	decltype(4);	-> bu tur int
+
+	int x{5};
+	decltype(+x);	-> bu tur int
+
+	decltype(x++);	-> bu tur int
+
+	decltype(++x);	-> bu tur int&. ++x bir L value expression oldugu icin elde edilecek tur int&
+
+	int x{5};
+	int * ptr = &x;
+	decltype(*ptr);	-> elde edilecek tur int&. cunku *ptr L value expression belirtir.
+	
+
+	int x = 10;
+	decltype (x); -> int
+	decltype ((x)); -> int&
 
 
 
+NOT: bir fonksiyonun geri donus degeri turu sag taraf degeri referansiysa o fonksiyona yapilan cagri ifadesinin kategorisi X value
+	int bar();
+	int& tar();
+	int&& foo();
+	//...
+	foo()	-> X value
+
+	decltype(bar())	-> int turu
+	decltype(tar())	-> int& turu, yani ilkdeger vermek zorunlu
+	decltype(foo())	-> elde edilen tur int&&
+
+- decltype'a operant olan ifade icin islem kodu uretilmez. buna unevaluated context demistik.
+
+
+##5. Ders##
+
+C'deki scope'lar nelerdi?
+
+	file scope (goto label'ları)
+	block scope 
+	function prototype scope
+	function scope
+
+
+C++'daki scope'lar
+
+	namescape
+	block scope 
+	class scope
+	function prototype scope
+	function scope
 
 
 
+SIRA ŞÖYLE GİDİYOR:
+
+name lookup
+	context control	
+		access control (public, private falan onlarla ilgili)
+
+
+
+- isim arama aranan isim bulununca biter. 
+
+int x(int);
+//...
+int x = 5;
+x(12);		// x fonksiyonu çağrılmaz. int değişkeni olan x'i buldu arama bitti. 
+		// Buna name hiding, name masking ya da name shadowing demir.
+
+
+mülakat sorusu:
+int x = 5;
+int main()
+{
+	int x = x;	// undefined behaviour!, Faaliyet alanı başlamış oluyor dolayısıyla kendi ile ilkdeğer veriyoruz.
+			   çöp değer ile ilkdeğer vermek UB!
+//...
+
+
+int main()
+{
+	int printf = 0;
+	printf("hello world");	// sentaks hatası, context controlde patlayacak. 
+//...
+
+
+5. ders 53.56 da kaldım ODR konusunda
 
