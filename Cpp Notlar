@@ -653,5 +653,142 @@ int main()
 //...
 
 
-5. ders 53.56 da kaldım ODR konusunda
+ODR	(One Definition Rule)
+- yazılımsal varlıkların sadece 1 tanımlaması olabilir ama birden fazla bildirimi olabilir.
+
+ODR'ı çiğnemeyen istisnai durumlar:
+	inline functions
+	inline variable
+	constexpr functions
+	template definitions
+
+
+birden fazla dosyada eğer inline fonksiyon özdeş olarak tanımlanırsa ODR ihlal edilmez.
+Bir fonksiyonun tanımını inline olarak bir başlık dosyasına koyabiliriz. Derleyici inline expansion yapma şansına sahip olacak.
+Sadece böyle geliştirme yapılarak yazılan kütüphanelere "header only library" denir.
+inline expansion için derleyici o fonksiyonun tanımını görmek zorunda.
+
+inline sözcüğü sadece tanımda, sadece bildirimde ya da her ikisinde de kullanılabilir.
+
+C'deki inline ile mantıksal farklılıklar var!
+
+
+C++17 ile birlikte inline variable da eklendi.
+normalde c de global değişkeni her yerde kullanmak için 
+header'da 
+extern g_x;
+
+kaynak dosyada 
+g_x = 1;
+şeklinde kullanacaktık.
+
+doğrudan başlık dosyasında tanım yapsaydık yine ODR ihlal edilecekti.
+
+artık c++17 ile farklı kaynak dosyalarda:
+inline int g_x = 1;
+şeklinde tanımlayabiliriz ve bu aynı adrese ilişkin bir değişken olur.
+
+
+
+Enumaration Types
+
+//örtülü dönüşüm.
+C'deki hatanın mirası olarak aritmatik türlerden enum türlerine örtülü dönüşüm yok
+fakat enum türlerinden aritmatik türlere örtülü dönüşüm var. Bu C++'ın gençlik günahlarından biri.
+
+//underlying type
+incomplete type olarak kullanamıyoruz.
+
+enum Color;
+
+struct Nec {
+
+Color c;	// burada sizeof Color bilinmediği için incomplete type olarak kullanamıyoruz.
+};
+
+//aynı scope'taki aynı ismin birden fazla varlığa verilmesi sentaks hatası oluşturuyordu.
+enum Color {Red, Green, Blue};
+enum ScreenColor {Red, Magenta, Black};
+
+
+artık underlying type seçilebilir oldu.
+enum Color : unsigned int {blue, black, red};
+incomplete type için olan sorun böylelikle çözülmüş oldu:
+
+enum Color : unsigned int;
+
+struct Data {
+	//
+	Color c; // buradaki storage ihtiyacını belirleyebilecek.
+};
+
+
+//scoped enum
+enum class Color {blue, black, red};
+
+modern c++ ile buna da underlying type belirtme özelliği geldi
+
+enum class Color : unsigned char  {blue, black, red};
+
+buradaki blue black ve red'i kullanılırken resolution operatörünü kullanmak zorunlu:
+auto x = Color::red;
+
+enum class Suit {Club, Diamon, Heart, Spade};
+burada nitelendirmek için sürekli Suit::xxx kullanmak verbositeyi arttırıyor.
+bunları çok kullandığın yerde using enum Suit; kullanabilirsin.
+
+void func(Suit x)
+{
+	using enum Suit; //c++20 ile eklendi. artık nitelendirmek zorunda değilsin.
+	//...
+}
+
+void func(Suit x)
+{
+	using Suit::Diamond; //c++20 ile eklendi. artık Diamond enum sabitini nitelendirmeden direkt kullanabilirim.
+	using Suit::Diamond, Suit::Club; //c++20 ile eklendi. ya da birden fazla böyle belirtebilirim.
+	//...
+}
+
+
+
+
+
+##6. Ders##
+
+-Type cast operators
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
