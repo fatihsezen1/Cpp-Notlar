@@ -758,23 +758,122 @@ void func(Suit x)
 
 -Type cast operators
 
+static_cast<target type>(operand)
+const_cast<target type>(operand)
+reinterpret_cast<target type>(operand)
+dynamic_cast<target type>(operand)
+
+	-----------------------------------------------------
+	static_cast "standart dönüştürmeler (standard conversion)" için kullanılmaktadır. Standart dönüştürme demekle 
+	aritmetik türler arası dönüştürmeler, enum ile nümerik 	dönüştürmeleri, void * dönüştürmeleri, türemiş sınıftan 
+	taban sınıfa adres dönüştürmeleri kastedilmektedir.
+
+	int ival = 190;
+	int ival2 = 19;
+	static_cast<double>(ival) / ival2;
+	
+	enum Fruit {apple, banana, pear};
+	//...
+	int ival = static_cast<int>(apple);
+	
+	int x{};
+	void* vp {&vp};
+	//...
+	int* ip = static_cast<int *>(vp);
+	
+	enum class Fruit {apple, banana, pear};
+	const char* const fnames[] = {"apple", "banana", "pear", "cherry"};
+	//...
+	fruit f {fruit::banana};
+	fnames[static_cast<int>(f)];
+
+	-----------------------------------------------------
+	const_cast adres dönüştürmelerinde const'luğu atmak için (const away cast) kullanılmaktadır.
+	const_cast const olmayan bir adresin const adrese dönüştürülmesinde de kullanılabilir.
+	adres ya da referans semantiğinde kullanılır. Adres ya da referans olmadan kullanamazsın.
+	
+	int x{};
+	const int* p = &x;
+	int* ptr;
+	ptr = const_cast<int*>(p);
+	
+	int x{};
+	auto p = const_cast<const int*>(&x);	ama bunu zaten şöyle yazabiliriz const int* cp = &x;
+	-----------------------------------------------------
+	reinterpret_cast farklı türlerdeki adresler arasında ve adres türleriyle aritmetik türler arasında tür dönüştürmeleri için kullanılmaktadır.
+
+	int* p = reinterpret_cast<int *>(0x1AC4);
+
+	const int x = 54;
+	reinterpret_cast<char *>(const_cast<int *>(&x));
+	-----------------------------------------------------
+	kalıtım(inheritence) ve run time polymorfizim ile ilgili.
 
 
 
 
+constexpr anahtar sözcüğü:
+-bu sözcük bir specifier.
+
+	-global değişkenlerin ilk değerini sabit ifadesi ile alması gerekir. C++'da fonksiyon ile de yapılıyor
+	-dizi boyutu belirten ifadelerin constant expression olması gerekiyor.
+	-switch'te case label'larını izleyen ifadelerin constant expression olması gerekiyor.
+	- struct fatih {
+		int x : 3;	//burada x bitfield member. : karakterinden sonraki ifade constant expression olması gerekiyor.
+	  };
+	
+const int x = 10;
+x	->	bu bir constant expression mu? yani compile time'da değeri belli mi? Cevap it depends. Onu initialize eden ifadenin ne olduğuna bağlı.
+		x bir constant expression.
+
+const int y = foo();
+y	->	y bir constant expression değil.
+
+-constexpr bir type qualifier değil.
+constexpr int x = 56;	-> x int decleration type'ı const int (constexpr int değil)
+
+bu tanımlama ne ifade ediyor?
+bu değişkenin oluşturduğu ifadenin constant expression olarak kullanılma garantisi var.
+
+-constexpr nitemelemesinin kullanılması için değişkenin literal type olması gerekir.
+-constexpr değişkenine ilkdeğer veren ifade constant expression olmak zorunda.
+
+
+-constexpr fonksiyon olunca ne oluyor?
+-İlk çıktığında sadece 1 satır olmak zorundaydı şimdi neredeyse her kısıtlama kalktı.
+
+	constexpr int func(int x)
+	{
+		return x * x + 5;
+	}
+
+- constexpr  bir fonksiyona çağrı yapılırken fonksiyon parametrelerine geçirilen argumanlar constant expression ise fonksiyon çağrı ifadesi
+  constant expression gereken yerde kullanırsa constant expression belirtmek zorunda. Yani compile time'da elde edilmek zorunda. Bu mecburiyet
+  constant expression gereken yerde kullanırsa geçerli!
+
+
+ constexpr int a = func(2) + func(1);	// burada a'ya verilen ilkdeğer constexpr olmak zorunda olduğu için ve 2 ve 1 constant expression olduğu için	
+					   ='in sağ tarafı compile time'da belirlenmek zorunda.
+
+-constexpr fonksiyonlar implicitly inline fonksiyonlardır. Yani constexpr fonksiyonları başlık dosyalarında yazabiliriz.
+-bunun inline expansion ile doğrudan bir alakası yok.
+-bazı değerlerin compile time'da hesaplanması verimi artırıyor.
+-bildirim ve tanım ikisinde de constexpr anahtar niteleyicisinin bulunması gerekiyor.
 
 
 
 
+##7. Ders##
 
-
-
-
-
-
-
-
-
+-function overloading
+-function overloading compile time yöneliktir. Hangi fonksiyonla ilişkili olduğunu koda bakarak anlayabiliyor.
+-function overloading aynı scopeta olacak ve isimleri aynı olacak
+-aynı scopeta aynı isimli olacak fakat imzaları farklı olacak.
+-fonksiyonunun geri dönüş değeri imzaya dahil değildir.
+-imzaları da geri dönüş türü de aynıysa fonsiyon overloading değil redeclerationdur.
+-imzası ve ismi aynıysa ama gdd farklıysa bu bir sentaks hatası.
+-top level const'luk imzayı değiştirmez dolayısıyla function overload olmaz redecleration olur.
+-tür eş ismi fn overloading olmasına yetmez.
 
 
 
