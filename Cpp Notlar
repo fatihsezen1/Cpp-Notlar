@@ -875,11 +875,46 @@ bu değişkenin oluşturduğu ifadenin constant expression olarak kullanılma ga
 -top level const'luk imzayı değiştirmez dolayısıyla function overload olmaz redecleration olur.
 -tür eş ismi fn overloading olmasına yetmez.
 
+void func(const int);
+void func(int);			// bu ikisi redecleration. function overloading yok
+
+void func(int *p);
+void func(int * const p);			// bu ikisi redecleration. function overloading yok
+
+void func(int *p);
+void func(const int*  p);		// bunların ikisi farklı tür. function overloading var.	CONST OVERLOADING
 
 
+void foo(int p[]);
+void foo(int *p);	// redecleration. function overloading yok.
+
+void foo(int p[8]);
+void foo(int p[7]);
+void foo(int p[5]);
+void foo(int *p);		// burada 1 tane overload var.
+
+void foo(int(*)[10]);
+void foo(int(*)[12]);
+void foo(int(*)[13]);		// 3 tane overload var
+
+void foo(int(int));
+void foo(int(*)(int));		//redecleration. üsttekinde function decay olacak ve alttakinin aynısı olacak.
+
+void foo(int);
+void foo(int&);
+void foo(int*);
+void foo(int&&);		//4 Tane overload var.
+
+void foo(long double);
+void foo(char);			// function overloading var.
 
 
+FUNCTION OVERLOAD RESOLUTION
 
+1- Function overload set oluşturuyor. Yani tüm overloadları listeliyor. Argumanları vs önemsiz bu aşamada. 
+   Bu fonksiyonlara candidate functions denir.
+2- Viable functions seçilir. Arguman sayısı ve parametre sayısı aynı olacak. Parametre türleri arasında örtülü dönüşüm olacak.
+3- Viable sayısı birden fazlaysa dilin kurallarına göre uygunların içinden en uygunu seçecek(best match). Ya da ambiguity hatası olacak.
 
 
 
