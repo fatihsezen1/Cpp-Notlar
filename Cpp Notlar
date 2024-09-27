@@ -917,6 +917,64 @@ FUNCTION OVERLOAD RESOLUTION
 3- Viable sayısı birden fazlaysa dilin kurallarına göre uygunların içinden en uygunu seçecek(best match). Ya da ambiguity hatası olacak.
 
 
+en kötü dönüşüm:					void func(...);		//variadic conversion her zaman herkese kaybediyor.
+en kötünün bir iyisi user-defined conversion.:		yani constructor, operator overloading fonksiyonları falan.
+3. kötü dönüşüm, standart dönüşümler:			legal dönüşümler(veri kaybı bile olsa üstteki ikisinden daha iyi bir dönüşüm.)
+
+Ya eğer birden fazla standart dönüşüm varsa? en iyiden kötüye sıralama şöyledir:
+	1- exact match
+	2- promotion
+	3- conversion
+
+1- exact match:
+-birebir aynı olan türler exact  match.
+-T* ve const T* exact match.
+-array decay exact match. 
+-fonksiyon türünden fonksiyon adresi türüne dönüşüm exact match. Function to pointer conversion.
+-L value to R value dönüşümü exact match. (yani fonksiyonu değişken ismi ile çağırmak gibi. foo(x);
+
+2- promotion
+integral promotion
+	short
+	unsigned short
+	char
+	signed char
+	unsigned char
+	bool
+
+	Bu türlerden (int altı türlerden) int türüne olan promotion.
+
+float -> double promotion (sadece bu promotion, diğerleri conversion)
+	void foo(double);	//float->double conversion
+	void foo(long double);	//float->long double conversion
+	void foo(int);		//float->double promotion olduğu için bu kazanacak
+
+	foo(3.4f);
+
+
+
+
+	void foo(char);
+	void foo(long double);
+	
+	foo(3.4);	//üstteki ikisi de conversion olduğu için ambiguity error!
+
+
+
+	void foo(unsigned int);
+	void foo(long double);
+	
+	foo(12);	//üstteki ikisi de conversion olduğu için ambiguity error!
+
+
+
+
+
+
+
+
+
+
 
 
 
