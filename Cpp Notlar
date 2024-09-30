@@ -1052,7 +1052,8 @@ bir fonksiyonu özellikle nullptr ile çağırınca başka şeyler yapmasını i
 
 --------------------
 
-
+birden fazla parametre olan fonksiyonlarda viable fonksiyon sayısı birden fazlaysa ambiguity olmaması için şunun sağlanması gerekiyor:
+en az bir parametrede diğerlerinden iyi olacak ancak diğer parametrelerde diğerlerinden kötü olmayacak.
 
 
 
