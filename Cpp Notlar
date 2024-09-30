@@ -879,7 +879,7 @@ void func(const int);
 void func(int);			// bu ikisi redecleration. function overloading yok
 
 void func(int *p);
-void func(int * const p);			// bu ikisi redecleration. function overloading yok
+void func(int * const p);		// bu ikisi redecleration. function overloading yok
 
 void func(int *p);
 void func(const int*  p);		// bunların ikisi farklı tür. function overloading var.	CONST OVERLOADING
@@ -965,6 +965,96 @@ float -> double promotion (sadece bu promotion, diğerleri conversion)
 	void foo(long double);
 	
 	foo(12);	//üstteki ikisi de conversion olduğu için ambiguity error!
+
+
+	void func(int, int=0);
+	void func(int);
+	func(1);	//ambiguity!
+
+	BİR İSTİSNA:
+	void foo(void*);
+	void foo(bool);
+	int x = 10;
+	func(&x);	// normalde ikisi de conversion olduğu için ambiguity olması gerekir. Ama bu bir istisna.
+			   Burada void* olan çağrılır.
+	
+	
+	void foo(int&);
+	void foo(int&&);  //bunlar kesinlikle overload. L value ile çağırırsan üstteki, R value ile çağırırsan alttaki... 
+
+
+	void foo(const T&);
+	void foo(T&&);	
+	int x{3};
+	foo(x);		// L value parametreli olduğu için alttaki viable olmayacak. Üstteki çağrılacak.
+	foo(11);	// Normalde her ikisi de viable. Ama dilin kuralı gereği (C++11) sağ taraf değeri olan çağrılacak. Taşıma semantiği ile ilgili nedenden dolayı.	
+ 			   void foo(T&&); çağrılır.
+
+--------------------
+
+asla unutmaman gereken bir soru:	
+ekrana hangi yazı çıkacak?	
+	foo fonksiyonlarına R valueyu gönderirsek üstteki, L valueyu gönderirsek alttaki çağrılacak. 
+	func içindeki foo çağrısındaki r bir isim olduğu için L valıe expression. Dolayısıyla standart
+	outputa "foo(const int&)" yazılır. Burada value category ile data type'ın birbiri ile karıştırılmasını 
+	ölçüyor. Bir isim bir değişkene ilişkinse o L value expressiondur.
+
+void foo(int &&)
+{
+	std::cout << "foo(int&&)\n;
+}
+void foo(const int &)
+{
+	std::cout << "foo(const int&)\n;
+}
+void func(int&& r)
+{
+	foo(r);
+}
+int main()
+{
+	func(123);
+}
+
+
+--------------------
+
+
+void foo(int &&)
+{
+	std::cout << "foo(int&&)\n;
+}
+void foo(const int &)
+{
+	std::cout << "foo(const int&)\n;
+}
+int main()
+{
+	int x{10};
+	1- foo(x);			// yukarıda öğrendiğimiz gibi burada x, L value expr olduğu için alttaki fonksiyon çağrılacak
+	2- foo(static_cast<int&&>(x));	// burada R value expressiona cast ettik ve üstteki fonksiyonun çağrılmasını sağladık.
+	3- foo(std::move(x));		// 2 numaralı işlemi yapan bir fonksiyon. Burada L value expr'dan R value  expr'a type cast yapmış olduk.
+					// move fonksiyonunun gdd türü sağ taraf referans türü. Sağ taraf referans türüne dönen fonksiyonlara 
+					// yapılan çağrı ifadesi x value expression idi. Yani x value olması demek R value olması demek.
+					// Overload olan foo'da da R value expr olarak kullanmaya devam etmek için yine move fonksiyon çağrısı gerekir.
+					// Yani bundan sonra hayatına R value expr olarak devam etmez.
+}
+
+
+
+--------------------
+
+1- void func(std::nulptr);
+2- void func(int*);
+
+bir fonksiyonu özellikle nullptr ile çağırınca başka şeyler yapmasını istiyorsan 1'deki overload'ı yazman gerek. Çünkü exact match olduğu için 1 numaralı overload çağrılacak.
+
+
+--------------------
+
+
+
+
 
 
 
