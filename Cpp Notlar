@@ -945,9 +945,9 @@ integral promotion
 	Bu türlerden (int altı türlerden) int türüne olan promotion.
 
 float -> double promotion (sadece bu promotion, diğerleri conversion)
-	void foo(double);	//float->double conversion
+	void foo(int);		//float->int conversion
 	void foo(long double);	//float->long double conversion
-	void foo(int);		//float->double promotion olduğu için bu kazanacak
+	void foo(double);	//float->double promotion olduğu için bu kazanacak
 
 	foo(3.4f);
 
