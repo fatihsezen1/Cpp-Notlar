@@ -1116,9 +1116,42 @@ int main()
 -sınıfların üye fonksiyonları için redecleration söz konusu olamaz. Sentaks hatası olur.
 -class anahtar sözcüğü kullanınca varsayılan access specifier private'tır.
 -struct anahtar sözcüğü kullanınca varsayılan access specifier public'tır.
+-sınıfın non-static üye fonksiyonlarının implicit olarak sınıf nesnesinin adresini alıyor.
+ Nec x;
+ x.foo();	//bu tarz çağrımlarda aslında gizlice bu fonksiyona Nec* türünden
+		  arguman geçmiş oluyoruz.
+
+	İşte bu yüzden non-static üye fonksiyonlar bir sınıf nesnesi ile çağrılmalı.
+	Örneğin 
+	class Nec {
+	public:
+		void set(int,int);
+	};
+	//..
+		Nec::set(3,4);	//error! namelookup'ta sıkıntı yok ama bir sınıf nesnesi ile çağırmadık.
+	
+		Nec mynec;
+		mynec.set(1,5);	//doğru kullanım.
+
+- 
+class Nec {
+public:
+	void set(int,int);
+private:
+	int mx, my;
+};
+
+void Nec::set(int x, int y)
+{
+	mx = 1;		// mx önce scope içinde, sonra class scope'ta aranır
+	my = 3;		// my önce scope içinde, sonra class scope'ta aranır
+}
+	
+	Yerel bir mx olsaydı onu görecekti ve onu değiştirecekti.
+	Burada da derleyici ilk değişkenine gizlice geçirilmiş olan sınıf nesnesinin adresini kullanır.
 
 
-
+##9. Ders##
 
 
 
