@@ -807,7 +807,7 @@ dynamic_cast<target type>(operand)
 	const int x = 54;
 	reinterpret_cast<char *>(const_cast<int *>(&x));
 	-----------------------------------------------------
-	kalıtım(inheritence) ve run time polymorfizim ile ilgili.
+	dynamic_cast kalıtım(inheritence) ve run time polymorfizim ile ilgili.
 
 
 
