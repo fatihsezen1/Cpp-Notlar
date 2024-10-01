@@ -1057,6 +1057,93 @@ en az bir parametrede diğerlerinden iyi olacak ancak diğer parametrelerde diğ
 
 
 
+##8. Ders##
+
+hatırlatma: data type ile value kategorisi farklı kavramlar. Bir ifadenin value kategorisi olur. İsim formundaki ifade R valueya ait olsa bile
+L value referans overloadı çağrılır. Bunun örneği yukarıda var.
+
+- C kodu ile C++ kodunu link ederken, C de fonksiyonlar C tarzı decorate ettikleri için link aşamasında problem olabilir.
+Bu yüzden C'den gelen fonksiyonların dışsal bağlam olduğunu belirtmek için C++ dosyasında şöyle bir bildirim yapılmalı.
+
+extern "C" int sum(int,int);
+
+-biz başlık dosyası C'de derlenecek ama hem C hem de C++'da kullanılacak olsun. Bu durumda fonksiyon bildirimlerini C dosyaları
+bu şekilde : int sum(int,int); ancak C++ dosyalarının bu şekilde görmesi gerekir: extern "C" int sum(int,int);
+Bu durumda koşullu derleme komutlarından faydalanabiliriz.
+
+            header.h
+|--------------------------------|
+|#ifdef __cplusplus		 |
+|extern "C" {			 |	
+|#endif				 |
+|				 |
+|	int foo(int,int);	 |
+|	int bar(int,int);	 |
+|	int tar(int,int);	 |
+|				 |
+|#ifdef __cplusplus		 |
+|}				 |
+|#endif				 |
+|--------------------------------|
+
+
+
+CLASSES-SINIFLAR
+
+isim arama ile ilgili sıra şu şekildeydi:
+
+
+name lookup	->	bir ismin hangi varlığa ilişkin olduğuna bakılması. ya başarılıdır ya başarısız. 1 kere yapılır
+	context control		->	bulunan varlık ismin kullanımına uygun mu?
+		access control (public, private, protected)	->	C'de olan bir şey değil. Erişim izni var mı?
+
+
+örnek:
+
+int func(int);
+int main()
+{
+	int func = 4;
+	func(1);	// Error! Burada üst satırdaki func'u gördü ve name lookup bitti. Context controlde hata oluştu.
+}
+
+
+------------------------------
+
+-class'ın storage değeri nonstatic data member'ları kadardır. Fonksiyonlar storage'a etki etmez.
+-sınıfların non-static veri elemanlarına birçok dilde instance-variable denir.
+-sizeof hiçbir tür için 0 değeri olmaz. bir adres oluşması için boş sınıf bile olsa sizeof değeri 1 byte olur.
+-sınıfların üye fonksiyonları için redecleration söz konusu olamaz. Sentaks hatası olur.
+-class anahtar sözcüğü kullanınca varsayılan access specifier private'tır.
+-struct anahtar sözcüğü kullanınca varsayılan access specifier public'tır.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
