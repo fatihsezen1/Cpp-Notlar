@@ -1153,39 +1153,227 @@ void Nec::set(int x, int y)
 
 ##9. Ders##
 
+void set(double d);	// global fonksiyon
+void Nec::set(int x)	// üye fonksiyon
+{
+	set(2.3);	// üye fonksiyon çağrılır
+}
+---------------------------------------------------------
+class MyClass {
+public:
+	void  bar(double x);
+private:
+	void  bar(int x);
+};
+int main()
+{
+	MyClass m;
+	m.bar(12);	//1- namelookup'ta iki overloadı da buldu.
+			//2- function overload resolutiondan private'taki seçilecek
+			//3- ama en son access control'de takılacak
+
+			//o yüzden bu kod sentaks hatası.
+}
+
+Buradaki espri public, private farketmeksizin hepsinin aynı scope'ta olduğu için overload fonksiyondur.
+Erişim kontrolü bu adımdan sonra yapılır.
+---------------------------------------------------------
+-Bir üye fonksiyonun accessor ya da mutator olduğunu nasıl anlayacağız?
+Normalde global fonksiyonlarda aldığı nesne adresinin başında const yazıyorsa bu fonksiyonun
+accesor olduğunu anlıyorduk. Ancak üye fonksiyonlarda sınıf nesnesinin adresi fonksiyonların başında
+gizli bir şekilde yazıldığı için sentaks değişiyor.
+
+-Parametre parantezi kapandıktan sonra const anahtar sözcüğü kullanılırsa böyle fonksiyonlara
+const member function denir. 
+
+class MyClass {
+public:
+	void  bar() const; 	// const member function
+	void  tar() ; 		// non-const member function
+};
+
+-non-static fonksiyonun const üye fonksiyon olup olmaması sınıf nesnesinin veri elemanlarıyla doğrudan ilişkisi yok.
+Sınıf nesnesinin problem domainindeki anlamı ile ilgisi var. Yani sınıfın veri elemanlarının değişip değişmemesi ile 
+bu konunun hiçbir alakası yok. 
+
+-Sınıfın veri elemanını değiştiren bir fonksiyon const olabilir mi? EVET.
+
+-fonksiyon tanımda da bildirimde de const anahtar sözcüğü kullanılacak.
+
+--------------------------------------------------------------------------
+//Aşağıdaki kod semantik açıdan doğru olsa da sentaks açısından geçersizdir.
+
+#include <iostream>
+
+class Person {
+public:
+    std::string get_name() const;
+private:
+    int m_debug_count = 0;
+};
+
+int g{};
+
+std::string Person::get_name() const;
+{
+    ++m_debug_count;    //error! const üye fonksiyon sınıf nesnesinin değerini değiştiremez.
+}
+
+int main()
+{
+
+    return 0;
+}
+--------------------------------------------------------------------------
+// Bu semantik açıdan doğru olan değişikliği yapabilmek amacıyla sentaksa 
+// uydurmak için değişkenin önüne mutable anahtar sözcüğü getirilir.
+
+#include <iostream>
+
+class Person {
+public:
+    std::string get_name() const;
+private:
+    mutable int m_debug_count = 0; // Dikkat!
+};
+
+int g{};
+
+std::string Person::get_name() const
+{
+    ++m_debug_count;
+}
+
+int main()
+{
+
+    return 0;
+}
+
+--------------------------------------------------------------------------
+-const bir nesne için sınıfın sadece const üye fonksiyonlarını çağırabiliriz.
+--------------------------------------------------------------------------
+this keyword
+
+-global fonksiyonlarda this keywordu kullanılmaz.
+-this sınıf nesnesinin kendisini temsil etmiyor, adresini temsil ediyor. Bu yüzden sınıf 
+nesnesinin kendisini kullanmak istiyorsanız *this şeklinde dereference etmek gerekiyor.
+-this pointerinin oluşturduğu ifade L value expression DEĞİL,
+ this pointerinin oluşturduğu ifade PR Value  expressiondır.
+-this anahtar sözcüğünün kullanıldığı bir senaryo şöyledir:
+	
+	#include <iostream>
+	
+	class Myclass {
+	public:
+	    void func(int x);
+	};
+	
+	void fg1(Myclass*);
+	void fg2(Myclass&);
+	
+	void Myclass::func(int x)
+	{
+	    fg1(this);  //hangi sınıf nesnesi ile çağrılırsa onun adresi ile fg1'e çağrı yap
+	    fg2(*this); //hangi sınıf nesnesi ile çağrılırsa o sınıf nesnesi ile fg2'ye çağrı yap
+	}
+	
+	int main()
+	{
+	    Myclass m;
+	    m.func(12);
+	    return 0;
+	}
 
 
+-this anahtar sözcüğünün kullanıldığı başka bir senaryo, fonksiyon hangi sınıf nesnesi ile çağrılmışsa 
+ o sınıf nesnesinin adresi ile döndürmek için:
+
+	#include <iostream>
+	
+	class Myclass {
+	public:
+	    Myclass* foo();
+	};
+	
+	Myclass* Myclass::foo()
+	{
+	    //...
+	    return this;
+	}
+	
+	int main()
+	{
+	    Myclass m;
+	    m.foo();
+	}
 
 
+-this anahtar sözcüğünün kullanıldığı başka bir senaryo, fonksiyon hangi sınıf nesnesi ile çağrılmışsa 
+ o sınıf nesnesinin kendisi ile döndürmek için:
+
+	#include <iostream>
+	
+	class Myclass {
+	public:
+	    Myclass& foo();
+	};
+	
+	Myclass* Myclass::foo()
+	{
+	    //...
+	    return *this;
+	}
+	
+	int main()
+	{
+	    Myclass m;
+	    m.foo();
+	}
+
+-Aşağıdaki ifadede de operator overload fonksiyonları da *this döndüğü için aynı nesne ile tekrar diğer operator overload 
+fonksiyonlarını çağırmış oluyoruz.
+
+    std::cout << 5 << 1.2 << 223L;
+    cout.operator<< (5).operator<< (1.2).operator<<(223L);
 
 
+-this pointerinin amaçları özetle şunlardır:
+	*sınıf nesnesinin adresini veya kendisini global bir fonksiyona geçirmek.
+	*üye fonksiyonun sınıf nesnesinin adresini veya kendisini döndürmesini sağlamak. 
 
+- const üye fonksiyonlar için this bir low level const olur. Dolayısıyla aşağıdaki örnekte
+  const T* gibi olan this pointerını T* gibi return etmeye çalıştığımız için error olur.
+	
+	class Myclass {
+	public:
+	    Myclass* foo() const
+	    {
+	        //...
+	        return this; //Error!
+	    }
+	};
 
+- Olayı anlaman için aşağıdaki kodda sentaks hatası yok.
 
+	class Myclass {
+	public:
+	    const Myclass* foo() const
+	    {
+	        //...
+	        return this;
+	    }
+	};
 
+-Aynı durum referans semantiği için de geçerli.
 
+- fonksiyonun const olması imzanın bir parçası. Overload olur.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+	class Myclass {
+	public:
+		void foo();
+		void foo() const; //imzası farklı
+	};
 
 
 
