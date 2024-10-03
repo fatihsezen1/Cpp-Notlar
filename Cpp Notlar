@@ -1375,6 +1375,213 @@ fonksiyonlarını çağırmış oluyoruz.
 		void foo() const; //imzası farklı
 	};
 
+	Burada bir örnek vermek gerekirse vector sınıfının iki overload olan at fonksiyonu vardır.
+	Biri set etmek için diğeri get etmek içindir.
+	
+	Vector vec;
+	vec.at(3) = 11;		//const olmayan overload
+	auto x = vec.at(5);	//const olan overload
+
+--------------------------------------------------------------------------
+-Sınıfın üye fonksiyonunu inline fonksiyon yapmanın yolları:
+	*fonksiyonun tanımını başlık dosyası içinde yapmak ve inline keyword'ünü kullanmak. (ODR çiğnenmeyecek)
+	*fonksiyonun tanımını direkt sınıf içinde yaptığında  inline keyword'ünü kullanmasan bile inline yazmış olursun.
+
+-Inline fonksiyon içerisinde incomplete type bulunamaz.
+
+--------------------------------------------------------------------------
+##10. Ders##
+
+Sınıf Nesnelerinin Hayata Başlaması 
+Sınıf Nesnelerinin Hayatlarının Sonlanması
+
+-constructor'ın const üye fonksiyon olması yasak!
+-constructor'ın static üye fonksiyon olması yasak!
+
+-özel üye fonksiyonlar(special member function) modern cpp'den önce 4 taneydi, sonrasında 6 tane oldu
+derleyici bunların kodunu belirli koşullar altında bizim için yazabiliyor.
+	*default constructor
+	*destructor
+	*copy ctor
+	*move ctor		(c++11 ile eklendi)
+	*copy assignment
+	*move assignment	(c++11 ile eklendi)
+
+Bu terimin ingilizcesi : to default a special member function (derleyicinin kodu kendi yazması)
+
+-her constructor bir special member function değildir.
+
+-static initializiton fiasko:	aynı kaynak dosyadaki global değişkenlerin hayata geliş sırası belli.(tanımlanma sırasına göre)
+Fakat farklı kaynak dosyadaki global değişkenlerinki belli değil. Bu konu şu açıdan önemli. 
+
+a.cpp
+	C cx;
+b.cpp
+	D dx;
+c.cpp
+	O ox;
+
+
+cx sınıf türündeki nesne sınıf içinde dx'i kullanıyorsa onu kullanabilmesi için dx'in hayatta olması lazım. Ama böyle bir
+garanti yok. Böyle bir garanti varmış gibi farklı modüllerdeki global değişkenleri kullanmak kodu patlatabilir.
+
+-static yerel değişkenler ait oldukları fonksiyon çağrılmazsa hayata gelmiyor. İlk kez çağrıldığında constructor çağrılıyor.
+static yerel değişkenlerin sonlanması da main fonksiyonunun sonlanmasından sonra oluyor.
+
+-Bir nesneyi bir referansa bağlamak yeni bir nesne oluşturmaz. Yani yeni bir ctor çağrılmaz.
+ Bunlar assembly düzeyinde birer pointer.
+
+	örn:
+	Myclass mx;
+	Myclass& r1 = mx;
+	Myclass&& r2 = r1;	// bir kez ctor çağrılır
+
+	örn:
+	Myclass mx;
+	Myclass&& r = move(mx); // bir kez ctor çağrılır
+
+- Mülakatlarda sorulan eğlenceli bir soru. Döngü kullanmadan 1'den 100'e kadar sayıları ekrana yaz.
+
+
+	#include <iostream>
+	
+	class Myclass {
+	public:
+	    Myclass()
+	    {
+	        static int x = 0;
+	        std::cout << x++ << " ";
+	    }
+	};
+	
+	int main()
+	{
+	    Myclass ar[100];
+	}
+
+-Hangi durumlarda default ctor çağrılır?
+	*bir sınıf nesnesini default initialize ettiğimizde. -> Myclass m;
+	*bir sınıf nesnesini value initialize ettiğimizde. -> Myclass m{};
+
+- Myclass m(); -> bu nedir?
+	burada fonksiyon bildirimi var. most vexing parse.
+
+
+-Bir fonksiyonun delete edilmesi:
+	Fonksiyonun var olduğunun ama o fonksiyona yapılacak çağrının sentaks hatası olduğunun bildirilmesi demek.
+
+	void foo(int) = delete;
+	int main()
+	{
+	    foo(11); // ERROR! function "foo(int)" cannot be referenced -- it is a deleted function
+	}
+
+-delete ile bildirilen fonksiyon da overload'tır. Var olması function overload'ta seçilmesi demek. 
+ Var ama çağırmak yasak.
+
+	void foo(int) = delete;
+	void foo(double);
+	void foo(long);
+	int main()
+	{
+	    foo(11); // ERROR! +2 overloads
+  		     // function "foo(int)" cannot be referenced -- it is a deleted function
+	}
+
+-global fonksiyonlar ve üye fonksiyonlar delete edilebilir. 
+
+-delete bildirimleri bazı özel durumlar dışında sınıfların special member fonksiyonları için kullanılır.
+ Ama böyle bir zorunluluk yok.
+
+-default bildirimi nedir?
+	Programcı bir fonksiyonun kodunu derleyicinin yazması için default bildirimi yapar. Eski C++'ta yoktu.
+ 	Her fonksiyon default edilir mi? HAYIR.
+	Sadece special member fonksiyonlar default edilebilir: 
+		*default constructor
+		*destructor
+		*copy ctor
+		*move ctor		(c++11 ile eklendi)
+		*copy assignment
+		*move assignment	(c++11 ile eklendi)
+
+
+
+-modern C++ diyor ki, bu special member fonksiyonlar şu statülerden birinde olabilir:
+	
+	*not declared
+	*user declared
+	*implicitly declared
+	
+	class Myclass {
+	public:
+	    Myclass();			// user declared
+	};
+
+
+	class Myclass {
+	public:
+	    Myclass() = default;	// user declared
+	};
+
+	class Myclass {
+	public:
+	    Myclass() = delete;		// user declared
+	};
+
+	class Myclass {
+	public:
+	  				// implicitly declared
+	};
+
+
+Öyle durumlar var ki derleyici user declared bildirim olmasa dahi bir special member fonksiyonu
+imlicitly declared ediyor. Bazen bildiriyor ama delete ediyor(C++11). Bazen bildiriyor ve default ediyor.
+
+--------------------------------------------------------------------------
+Member Initializer List(MIL)	ya da	Constructor Initializer	Sentaksı
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
