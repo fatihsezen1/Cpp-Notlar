@@ -1659,25 +1659,102 @@ Member Initializer List(MIL)	ya da	Constructor Initializer	Sentaksı
 - destructor'u sen nokta operatorüyle veya ok operatorüyle çağırmak legal. (replecemant new 'de mi ne kullanılıyormuş)
 
 
+##11. Ders##
+
+-kopyalama semantiği ne demek?
+	bir nesneyi bir başka nesnesinin değeriyle hayata getiriyoruz
+	ya da bir nesneye bir başka nesnenin değerini atıyoruz
+
+	bu durumda 
+
+	1- bu nesneler birbirinden bağımsız yani bundan sonraki bu nesnelerin biri üstünde yapılan
+	   işlemler diğerini etkilemeyecek.
+
+	2- bu nesneler karşılaştırılabilir nesneler ise (equality comparable) bu nesneler eşit olacak.
 
 
+copy constructur(cc diye kısaltırlar)
+
+	örneğin şurada copy constructor çağrılır:
+
+	Myclass m1;
+	Myclass m2(m1);
+
+- Bir sınıfın copy constructoru olmak zorunda. (delete, default vs edilmiş olabilir.)
+- Derleyicinin yazdığı copy ctor sınıfın non-static, public ve inline fonksiyonudur.
+- copy ctorun parametresi sınıf türünden sol taraf referansı.
+
+	class Myclass {
+	public:  
+	    Myclass(const Myclass& r);      //copy constructor
+	    //...
+	};
+
+- Derleyicinin yazacağı copy constructor aşağıdaki gibi olacaktır.
+
+	#include <iostream>
+	
+	class Date {
+	public:
+	    Date(const Date& r) : md(r.md), mm(r.md), my(r.my) {}	// copy ctor.
+	    Date(int d, int m, int y) : md(d), mm(m), my(y) {}
+	private:
+	    int md, mm, my;
+	};
+	
+	int main()
+	{
+	    Date d1{11,03,1998};
+	    Date d2 = d1;
+	    
+	    return 0;
+	}
+
+- Birinci senaryo; elimizde bir sınıf nesnesi varsa ve ikinci bir sınıf nesnesi ile buna ilk değer verirsek 
+  copy ctor çağrılır demiştik.
+	örn:
+	Myclass m1;
+	Myclass m2 = m1;
+
+- İkinci senaryo ise bir fonksiyonun parametresinin sınıf türünden olması ve ona bu sınıfla 
+  arguman geçilmesi.
+	void foo(Myclass m);
+
+- Üçüncü senaryo ise fonksiyonun return ifadesinin bir sınıf nesnesi olması. Ama burada copy elision
+  devreye girebiliyor.
+
+	class Myclass{};
+	Myclass foo()
+	{
+		//..
+	}
+
+NOT: RAII idiomu nedir? Son derece kötü uydurulmuş bir acronym. bjarne stroustrup uydurmuş, dilin mucidi.
+ (Resource acquisition is initialization). Kaynağın destructor tarafından geri verilmesine denir. Basit
+ bir olaya verilmiş havalı bir isim.
 
 
+-Biz hangi senaryolarda copy constructor yazmalıyız?
+ Bir adres tutan sınıf nesnesi düşün, örneğin string. Bu sınıf türünden nesne ile başka bir nesneye 
+ kopyalama yaptığımızda derleyicinin yazdığı copy ctor memberwise copy yapacak. Yani o anda aslında
+ iki sınıf nesnesi de bellekte aynı yeri gösterecek. Bu durumda birinin ömrü bittiğinde onun destructoru
+ bellekteki kaynağı geri verecek ve hayatı henüz bitmemiş olan nesne dangling pointer haline gelecek.
+ İşte bu gibi durumların önüne geçmek için copy ctoru biz yazarız. Bunun bir örneği utillib.c'de string 
+ sınıfında yazdığım copy ctor'da var.
 
+- Derleyicinin yaptığı karşılıklı kopyalamaya shalow copy veya memberwise copy deniyor halk arasında.
+- Bizim yazdığımıza deep copy deniyor halk arasında.
 
+----------------------------------
+Myclass m1, m2;
+//...
+m1 = m2;
+m1.operator=(m2);	// copy assigment operator function.
 
+parametreleri şöyle:
+Myclass &Myclass::operator =(const Myclass &r);
 
-
-
-
-
-
-
-
-
-
-
-
+2.18, 11. ders
 
 
 
