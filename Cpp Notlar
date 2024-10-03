@@ -1540,30 +1540,123 @@ imlicitly declared ediyor. Bazen bildiriyor ama delete ediyor(C++11). Bazen bild
 --------------------------------------------------------------------------
 Member Initializer List(MIL)	ya da	Constructor Initializer	Sentaksı
 
+- birinci seçenek sınıfın non-static veri elemanlarına MIL sentaksı ile ilkdeğer vermek. 
+- MIL sentaksı ile bütün non-static veri elemanlarına ilkdeğer vermek zorunlu değil.
+  Diğerleri default initialize edilmek zorunda.
+- Bazı durumlarda MIL sentaksı kullanmamak default initialize etmeye yol açacak o da sentaks 
+  hatasına sebep olacak. Örneğin referanslara ilkdeğer vermek zorunlu olduğu için MIL sentaksı
+  kullanılmalı.
+- Bir diğer örnek bir sınıf türünün veri elemanı default initialize edilen başka bir sınıf türü
+  olabilir. Ama o başka sınıf türünün default ctor'u olmayabilir. Bu durumda MIL sentaksı kullanmamak
+  sentaks hatası olur.
+
+	örnek:
+
+	class Myclass {
+	public:
+	    Myclass(): mx(12), my(34){} // MIL sentaksı
+	
+	private:
+	    int mx;
+	    double my;
+	};
+
+- veri elemanlarının hayata gelme sırası için bildirimdeki sıra mı yoksa MIL sentaksındaki sıra
+  mı esas alınacak? BİLDİRİMDEKİ SIRA ESAS ALINIR. (mülakatlarda da sorulur.)
+
+	class Myclass {
+	public:
+	    Myclass(): my(12), mx(my/3){}; //undefined behaviour, my henüz çöp değerde
+	
+	private:
+	    int mx;     //buradaki sıraya göre hayata gelir.
+	    double my;
+	};
+
+-Default member initializer: Eğer sınıfın herhangi bir ctor'unda veri elemanlarına ilkdeğer VERMEZSEN
+ o veri elemanlarına aşağıdaki sentaks ile VARSAYILAN olarak İLKDEĞER verebilirsin.
+
+	class Myclass {
+	public:
+	    Myclass()
+	    {
+	        
+	    }
+	
+	private:
+	    //default member initializer
+	    int mx = 0;     		// ya da -> int mx{0}; double my{0};
+	    double my = 0;		// ama bu olmaz !!!! -> int mx(0); double my(0);
+	};
+
+
+-Modern C++ ile gelen en önemli kurallardan biri:
+	Eğer derleyici imlicitly declare ettiği bir special member fonksiyonu tanımlama sürecinde
+	dilin kurallarını çiğneyen bir durum oluşursa derleyici default etmesi gereken special 
+	member fonksiyonu delete eder.
+
+
+	Soru: Aşağıdaki sınıfın default ctor'unun durumu ne?
+
+	class Myclass {
+  
+	private:
+	    int& r;
+	};
+
+	Cevap: derleyeci tarafından delete edilir. Neden? Derleyicinin yazacağı default ctor
+		aşağıdaki gibi olacak ve default initialize edilecek. Referansın default
+		initialize edilmesi sentaks hatası olacak.
+		Myclass() : r();
+	
+		Burada üstteki kural gerçekleştiği için bu ctor delete edilecek
+		Myclass() : r() = delete;
 
 
 
+	Örnek:
+		#include <iostream>
+		class Nec {
+		    Nec();
+		};
+		
+		class Myclass {
+		public:  
+		
+		private:
+		    Nec mnec;
+		};
+
+	
+	Nec'in default ctor'u private. Derleyici Myclass sınıfı için default ctor'u yazarken mnec 
+	değişkenini default initialize etmek isteyecek ve Nec'in default ctor'unu çağıracak. Ama Nec'in
+	default ctor'u private idi. Onu çağırmak sentaks hatası olacak. Bu yüzden Myclass'ın default ctor'u 
+	delete edilecek.
+
+	#include <iostream>
+	class Nec {
+	    Nec();
+	};
+	
+	class Myclass {
+	public:  
+	
+	private:
+	    Nec mnec;
+	};
+	
+	int main()
+	{
+	    Myclass mx; // ERROR! the default constructor of "Myclass" cannot be referenced -- it is a deleted function
+	}
 
 
 
+- Eğer derleyici dilin kurallarına göre, bir special member fonksiyonu implicitly declare ediyorsa, derleyicinin yazdığı bu
+  fonksiyon her zaman non-static, public, inline üye fonksiyonudur.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+- ctor'u sen nokta operatorüyle veya ok operatorüyle çağırmak sentaks hatası.
+- destructor'u sen nokta operatorüyle veya ok operatorüyle çağırmak legal. (replecemant new 'de mi ne kullanılıyormuş)
 
 
 
