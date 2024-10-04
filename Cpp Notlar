@@ -1745,6 +1745,19 @@ NOT: RAII idiomu nedir? Son derece kötü uydurulmuş bir acronym. bjarne strous
 - Derleyicinin yaptığı karşılıklı kopyalamaya shalow copy veya memberwise copy deniyor halk arasında.
 - Bizim yazdığımıza deep copy deniyor halk arasında.
 
+	bir copy constructor örneği:
+
+	String::String(const String &r) 
+	{
+		if (r.m_str != nullptr) {
+			m_str = new char[r.m_len + 1];
+			strcpy(m_str, r.m_str);
+		}
+		else
+			m_str = nullptr;
+		m_len = r.m_len;	// bu işlemi MIL sentaksı ile de ilk önce yapabilirdik.
+	}
+
 ----------------------------------
 Myclass m1, m2;
 //...
@@ -1754,9 +1767,25 @@ m1.operator=(m2);	// copy assigment operator function.
 parametreleri şöyle:
 Myclass &Myclass::operator =(const Myclass &r);
 
-2.18, 11. ders
+	bir copy assignment kod örneği:
+	
+	String &String::operator =(const String &r)
+	{
+		if (this == &r)		/* nesne kendisine atanmış mı? */
+			return *this;
+	
+		delete[] m_str;
+	
+		m_len = r.m_len;
+		m_str = new char[m_len + 1];
+		strcpy(m_str, r.m_str);
+	
+		return *this;
+	}
 
+-Fonksiyon bloğunun ilk başında "self-assigment" var mı diye kontrol ettik. Etmeseydik sonrasında free edilmiş m_str yüzünden 
+ tekrar dangling pointer durumu meydana gelecekti. 
 
-
+##12. Ders##
 
 
