@@ -1788,4 +1788,140 @@ Myclass &Myclass::operator =(const Myclass &r);
 
 ##12. Ders##
 
+-sınıfın eleman olan nesneleri zaten copy constructorı vs yazıldıysa yani sınıf türündense derleyici kendi
+yazdığı copy ctor'da onların copy ctor'unu çağırıyor. Örneğin sınıfın veri elemanlarının türü string, vector
+gibi standart kütüphanedeki sınıf türünden nesnelerse zaten onlar özel üye fonksiyonları var.
+
+
+-Modern C++ öncesi BİG 3 diye bir kavram vardı.
+
+Dectructor
+Copy constructor
+Assignment
+
+Big 3'e göre: Dectructor'ın yazımını derleyiciye bırakmak yerine kendiniz yazmak zorunda hissediyorsanız
+o zaman diğer iki fonksiyonu da yazmalısınız. Çünkü destructor'un yazılma nedeni bir kaynağı bırakmak olduğu
+için diğerlerini derleyicinin yazması uygun düşmeyecek.
+
+-Bu kural artık kullanılmıyor çünkü işin içine move'lar girdi. Artık Big 5 diyebiliriz.
+
+-----------------------------------------------------------------
+Aşağıdaki kodda main'de bütün foo'lar 2 numaralı overload'ı çağırır. Hepsi R value expression.
+Ancak 2 numaralı overloadın silinmesi sentaks hatası oluşturmaz çünkü const T& parametresine hem 
+R value hem L value expreesion bağlanabiliyordu. 2. overloadın silindiğinde oluşan duruma "fallback"
+denir. 
+
+	#include <iostream>
+	
+	class Nec{};
+	
+	void foo(const Nec&); //1
+	void foo(Nec&&); //2
+	
+	Nec bar();
+	Nec&& baz();
+	
+	int main()
+	{
+	    Nec mynec;
+	
+	    foo(Nec{});
+	    foo(std::move(mynec));
+	    foo(bar());
+	    foo(baz());
+	    
+	}
+
+-Move ctor'daki mantık şöyle: bir sınıf nesnesi ölmek üzereyken kaynaklarını başkası tarafından çalınması.
+Kaynakları çalınan nesnenin gösterdiği bellek alanı artık nullptr olacak, tekrar destructor çağrılırken bu durum 
+dangling pointer oluşturmayacak mı? İşte öyle bir kod yazacağız ki destructor'da kaynaklarının çalındığını anlayacak.
+Aynı şekilde str = s gibi bir atamada artık s nesnesinin gidici olduğunu biliyor ise o durumda da move assignment devreye girecek.
+
+Özetle yapılan iş: 	*deep copy yapmamak
+			*diğer nesnesnin kaynağını çalmak
+			*diğer nesne için destructor çağrıldığında kaynağın geri verilmemesini sağlamak.
+
+-Gidici nesneler sağ taraf değeri ifade. Bu yüzden sağ taraf değeri argümanı alan overloadı seçecek. Sağ taraf referansı
+kullanmak da mutator yapıyor yani "diğer nesne için destructor çağrıldığında kaynağın geri verilmemesini sağlamak."
+maddesini gerçekleştirebiliyoruz.
+
+	class Myclass {
+	public:
+		Myclass(const Myclass&);	// copy ctor (const L value referans parametreli)
+		Myclass(Myclass&&);		// move ctor (R value referans parametreli)
+	};
+
+Bu durumda R value referans argumanlı çağrılar için move ctor, L value referans parametreli çağrılar için copy ctor çağrılır.
+Herhangi bir nedenden dolayı move ctor yoksa, const T& türü hem R hem de L value'ya bağlanacağından dolayı ikisi için de copy ctor
+çağrılır. Bu duruma "fallback" demiştik.
+
+Aynı durum atamalar için de geçerli:
+
+	class Myclass {
+	public:
+		Myclass(const Myclass&);	// copy ctor (const L value referans parametreli)
+		Myclass(Myclass&&);		// move ctor (R value referans parametreli)
+
+		Myclass& operator=(const Myclass&);
+		Myclass& operator=(Myclass&&);
+	};
+
+
+-Derleyicinin yazdığı move ctor, elemanlara taşıma yapıyor, kopyalama yapmıyor. Sınıfın hem copy ctor'u
+hem move ctor'u varsa, derleyici atamayı move ctor kullanarak yapacak.
+
+-En sık yapılan hata şu ki ben de yaptım az önce:
+
+	class myclass {
+	public:
+	    myclass(const myclass& r) : x(r.x), y(r.y),z(r.z){}
+	    myclass(myclass&& r) : x(r.x), y(r.y),z(r.z){}  //!!!!! !!!!! HATA !!!!! !!!!!
+	
+	private:
+	    int x,y,z;
+	};
+
+Peki neden?	->	myclass(myclass&& r) : x(r.x), y(r.y),z(r.z){}  //!!!!! !!!!! HATA !!!!! !!!!!
+İsim formundaki ifadeler L value kategorisinde. Yani r'nin R value expression olması r.x'in R value expr olmasını
+doğurmuyor. O halen L value expr. Bu yüzden onları da R value expr'e cast etmemiz gerekir. Aşağıdaki gibi...
+
+	class myclass {
+	public:
+	    myclass(const myclass& r) : x(r.x), y(r.y),z(r.z){}
+	    myclass(myclass&& r) : x(std::move(r.x)), y(std::move(r.y)),z(std::move(r.z)){}
+	
+	private:
+	    int x,y,z;
+	};
+
+
+- Örneğin: 
+Aşağıdaki sınıfta sınıfın move ctorunu yazmasam, bir Nec nesnesini hayata getiren bir R value Nec 
+nesnesi olduğunda  derleyicinin yazdığı move ctor kullanılacaktı. Derleyicinin yazdığı move ctor da 
+str elemanını string sınıfının move ctor'u ile hayata getirecekti. Benim bu durumda bir şey yapmam gerekmiyor.
+Ama handle elemanlar varsa move ctoru kendim yazmam lazım.
+
+	
+	class Nec {
+	
+	private:
+		std::string str;
+		std::vector<int> vec;
+	};
+
+- Şimdi kendi yazdığımız string sınıfı için move contructoru yazalım:
+
+String::String(String&& other): mlen(other.mlen), mp(other.mp)
+{
+	other.mp = nullptr;	// other için destructor çağrıldığında bizim çaldığımız kaynağı geri vermemeli.
+	other.mlen = 0;
+}
+
+58.36
+
+
+
+
+
+
 
