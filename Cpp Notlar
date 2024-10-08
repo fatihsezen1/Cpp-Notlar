@@ -1998,7 +1998,7 @@ Buradaki mx için copy ctor çağrılacak. Kaynağı çalması için oradaki r'n
 
 bizim yazacağımız gibi bir move assignment kod örneği:
 
-bir copy assignment kod örneği:
+bir move assignment kod örneği:
 	
 	String &String::operator =(String && r)
 	{
@@ -2092,9 +2092,9 @@ belirtiyor.
 2- Herhangi bir ctor tanımlarsan (özel olsun veya olmasın) örneğin int parametreli bir ctor, 
    default ctor hariç diğer 5 özel üye fonksiyon implicity default edilecek.
 3- Eğer sadece default ctor bildirirsen diğer 5 özel üye fonksyion  implicity default edilecek.
-4- Eğer sadece default destructor bildirirsen,  sınıfın "move" memberları yok.
-						ctor ve "copy" memberlar implicity default edilecek.
-						ancak bu durum tehlikeli olduğu için deprecated edildi.
+4- Eğer  destructor bildirirsen,   sınıfın "move" memberları yok.
+				   ctor ve "copy" memberlar implicity default edilecek.
+		      		   ancak bu durum tehlikeli olduğu için deprecated edildi.
 
 5- Eğer sadece copy ctor bildirirsen, sınıfın default ctor'u yok
 				      sınıfın destructor'u implicity default edilecek.
@@ -2143,7 +2143,84 @@ belirtiyor.
 
 <BURASI İÇİN BİR TABLO VAR>
 
+
+
+
 ##13. Ders##
+
+Temporary Object (Geçici Nesneler)
+
+-"Temporary Object" nesneler PR value expr'dir.
+-"Temporary Object" nesneler içinde bulundukları expresiondan sonra hayata veda ederler.
+-C++17 sonrası bu tarz ifadelere "temporary meterialization" denmiş.
+-C++17 sonrası PR value expression olan geçici nesnelerin nesnenin kendisini değil de onu
+ oluşturmaya yönelik adeta bir instructor olmasına "mandatory copy elision" denir.
+ Burada copy ctor'u delete etsen bile sentaks hatası olmaz. Ama C++17 öncesi standartla
+ derlersen hata olur.
+
+copy elision
+-Modern c++ öncesi bunlar derleyici optimizasyonu olarak yapılıyordu. Sonrasında zorunlu hale 
+ getirildi.
+
+örnek:
+	myclass m = myclass{ myclass{myclass{}}};	//burada copy ctor çağrılmaz. 
+							//sadece 1 ctor çağrılır.
+
+örnek:
+	void foo(myclass)
+	{
+	}
+	int main()
+	{
+		foo(myclass{});
+	}
+
+Yukarıdaki kodda modern C++ öncesinde derleyici optimizasyonu olarak sadece default ctor
+çağrılabilirdi ama move ctor veya copy ctor delete hale geldiğinde sentaks hatası verirdi.
+Bu haliyle artık sentaks hatası yok, doğrudan default ctor çağrılacak.
+
+örnek:
+	myclass foo() //RVO
+	{
+		return myclass{};
+	}
+	int main()
+	{
+		myclass m = foo();
+	}
+
+c++17 ve sonrasında yine burada kopyalama yok. temporary metarialization var.
+
+*Bir fonksiyonun geri dönüş türünün bir sınıf türünden olması ve fonksiyonun geri
+dönüş değerini oluşturacak statement'ta PR value kullanılması durumuna popüler olarak
+"Return Value Optimization (RVO)" denir.
+------------------------------------------------------------------------------
+örnek:
+	myclass foo()
+	{
+		myclass x;
+		//...
+		return x;
+	}
+	int main()
+	{
+		myclass m = foo();
+	}
+
+*Derleyicinin ürettiği kod doğrudan myclass sınıf nesnesini geri dönüş değerinin yazılacağı yerde
+oluşturması. Bu garanteed copy elision değil. Ama burada sınıfın copy ctor'unu delete etseydim sentaks
+hatası olurdu. (Named Return Value Optimization (NRVO)) NRVO eski c++'ta da vardı.
+
+
+------------------------------------------------------------------------------
+conversion ctor (dönüştüren kurucu işlev)
+
+-tek parametreli ctor'ların daha önce konuşmadığımız önemli bir özelliği var.
+
+13. Ders 1:21:55
+
+
+
 
 
 
