@@ -1916,8 +1916,244 @@ String::String(String&& other): mlen(other.mlen), mp(other.mp)
 	other.mp = nullptr;	// other için destructor çağrıldığında bizim çaldığımız kaynağı geri vermemeli.
 	other.mlen = 0;
 }
+------------------------------------------------------------
+Taşıma Semantiği ile ilgili bir soru:
 
-58.36
+	#include <iostream>
+	
+	class myclass {};
+	
+	void func(myclass&& r)
+	{
+	    
+	}
+	int main()
+	{   
+	    myclass m1;
+	    func(std::move(m1));
+	}
+
+//1 - Yukarıdaki kodda func(std::move(m1)); çağrısıyla m1'in kaynağı çalınmış olur mu?
+//    Hayır! Sadece R value referans değeri ile fonksiyona çağrı yaptık. Kaynak çalma işlemi 
+//    func implementasyonu içinde yapılır.(yapılabilir.)
+------------------------------------------------------------
+//    Kaynak çalma işleminin iki yolu var. Ya bir myclass nesnesi hayata getireceğim ya da
+//    bir my class nesnesine atama yapacağım.
+
+Peki soru, aşağıdaki kod m1'in kaynağını çalmış olur mu?
+
+	#include <iostream>
+	
+	class myclass {};
+	
+	void func(myclass&& r)
+	{
+	    myclass mx = r;
+	}
+	int main()
+	{   
+	    myclass m1;
+	    func(std::move(m1));
+	}
+
+HAYIR! Yine aynı yere geldik. func implementasyonu içindeki r bir L value expression:  myclass mx = r;
+Buradaki mx için copy ctor çağrılacak. Kaynağı çalması için oradaki r'nin bir R value expr olması gerek.
+
+İşte aşağıdaki gibi bir kod olduğunda kendisine gelen sınıfın kaynağını çalar:
+
+	#include <iostream>
+	
+	class myclass {};
+	
+	void func(myclass&& r)
+	{
+	    myclass mx = std::move(r); //mx move ctor edilir.
+	}
+	int main()
+	{   
+	    myclass m1;
+	    func(std::move(m1));
+	}
+
+------------------------------------------------------------
+- move assignment yazalım:
+
+	class myclass {
+	public:
+	    myclass(const myclass& r) : x(r.x), y(r.y),z(r.z){}
+	    myclass(myclass&& r) : x(std::move(r.x)), y(std::move(r.y)),z(std::move(r.z)){}
+	    myclass& operator=(myclass&& r); //move assignment
+	
+	private:
+	    int x,y,z;
+	};
+
+	myclass& myclass::operator=(myclass&& r)	// bu derleyicinin yazdığı move assignment
+	{
+		x = std::move(r.x);
+		y = std::move(r.y);
+		z = std::move(r.z);
+		return *this;
+	}
+
+bizim yazacağımız gibi bir move assignment kod örneği:
+
+bir copy assignment kod örneği:
+	
+	String &String::operator =(String && r)
+	{
+		if (this == &r)		/* nesne kendisine atanmış mı? */
+			return *this;
+	
+		std::free(mp);
+		mlen = r.mlen;
+		mp = r.mp;
+
+		r.mp = nullptr;
+		r.mlen = 0
+
+		return *this;
+	}
+
+------------------------------------------------------------------------------------------------------------------------
+-Öyle durumlar var ki bir L value expr'in ve hayatına normal devam eden nesnenin kaynağını çalmamız gerekiyor ve 
+o nesne kaynakları çalınmış olarak hayatına devam ediyor.
+
+örnek:
+
+std::string str(1000, 'A');
+std::string sx = std::move(str); // str'nin kaynağını çaldım.
+//moved-from object/state
+
+Bu noktadan sonra str'nin destructorunun çağrılması sorun oluşturmaz çünkü destructor ona göre yazılmış.
+standart kütüphane (ve iyi 3rd party kütüphanelerde <bunu dokumante etmeliler>) şu garanti var.
+
+a) kaynağı çalınmış nesne "in a valid state"te olacak
+invariant'ları korunmuş olacak (örneğin string'in len'i vs)
+
+b) nesne destructible olacak
+
+c) nesneye yeni bir değer atayarak onu tekrar kullanabiliriz
+
+Ama kaynağı çalınan nesnesinin hangi değerde olduğunu bilemiyoruz.
+
+
+Bu durum için güzel bir örnek:
+
+	#include <iostream>
+	#include <fstream>
+	#include <vector>
+	#include <string>
+	
+	int main()
+	{
+	    std::ifstream ifs{"test.txt"};
+	    if(!ifs) {
+	        std::cerr << "cannot open file\n";
+	        return 1;
+	    }
+	
+	    std::vector <std::string> svec;
+	
+	    std::string sline;
+	
+	    while (getline(ifs, sline))
+	    {       
+	        //svec.push_back(sline); // bu şekilde copy ctor çağrılır ve çok maliyetli
+	        svec.push_back(std::move(sline)); // bu şekilde move ctor çağrılır ve 
+	                                          // döngünün her turunda sline nesnesi moved-from state durumundadır.
+	    }
+	    
+	    //...
+	}
+
+------------------------------------------------------------------------------------------------------------------------
+-Bazı durumlarda kopyalama semantiğini bir sınıfa vermek istemiyoruz. Çünkü bu durum ya problemli ya da saçma oluyor.
+Bu durumdalarda kopyalama sentaks hatası haline getiriliyor. Örneğin bir mutex'in kopyalanması doğru değil. Bu durumlar için
+copy ctor'u ve copy assignment'i delete hale getiriyoruz.
+
+non-copiable sınıf örneği:
+
+	class Nec {
+	public:
+		//...
+		Nec();
+		Nec(const Nec&) = delete;
+		Nec& operator=(const Nec&) = delete;
+	};
+
+-Kopyalaması yasak ama taşımaya açık sınıflar için move-only class denir. Örneğin std::thread sınıfı. Yani yukarıdaki gibi.
+------------------------------------------------------------------------------------------------------------------------
+
+-Dilin kuralları net olarak hangi özel durumda sınıfın hangi özel fonksiyonunu derleyicinin imlicity olarak yazdığını
+belirtiyor.
+
+1- hiçbir üye fonksiyon tanımlamazsan 6 özel üye fonksiyonun hepsi imlicitly default edilecek.
+2- Herhangi bir ctor tanımlarsan (özel olsun veya olmasın) örneğin int parametreli bir ctor, 
+   default ctor hariç diğer 5 özel üye fonksiyon implicity default edilecek.
+3- Eğer sadece default ctor bildirirsen diğer 5 özel üye fonksyion  implicity default edilecek.
+4- Eğer sadece default destructor bildirirsen,  sınıfın "move" memberları yok.
+						ctor ve "copy" memberlar implicity default edilecek.
+						ancak bu durum tehlikeli olduğu için deprecated edildi.
+
+5- Eğer sadece copy ctor bildirirsen, sınıfın default ctor'u yok
+				      sınıfın destructor'u implicity default edilecek.
+				      copy assignmenti  implicity default edilecek.	 
+				      "move"lar yok 
+
+6- Eğer sadece copy assignment bildirirsen, default ctor implicity default edilecek.
+					     destructor implicity default edilecek.
+					     copy ctor implicity default edilecek.
+                                             "move" memberlar  yok.
+
+7- Eğer sadece move ctor bildirirsen,  default ctor yok.
+				       destructor implicity default edilecek.
+                                       copy ctor var ama delete edilir.
+                                       copy assignment var ama delete edilir.
+                                        move assignment yok.
+
+8- Eğer sadece move assignment bildirirsen, default ctor implicity default edilecek.
+					     destructor implicity default edilecek.
+					     copy ctor var ama delete edilir.
+                                             copy assignment var ama delete edilir.
+                                             "move" ctor yok.
+
+
+- bir sınıfın her zaman destructoru vardır.
+
+- bir sınıfa eskiden büyük 3'lü denilen
+	destructor
+	copy ctor
+	copy assignment
+  bunlardan herhangi birini bildirirseniz derleyici "move" memberleri bildirmez. Yani sınıfın
+  move memberları yoktur.
+
+- bir sınıfa "move" memberlardan birini bildirirseniz derleyici "copy" memberları delete eder.
+
+- "move"lardan birini yazarsan diğeri "not declared" olur. Yani mantıken diğer move'u da senin yazman lazım zaten.
+
+- "copy"lerden birini yazarsan diğeri "defaulted" olur ama bu durum çok tehlikeli ve zaten deprecated edilmiş.
+
+- sınıfın "copy" elemanları varken "move"ları delete etmek aptallıktan başka bir şey değil sakın yapma. Çünkü aşağıdaki gibi
+  bir çağrı sentaks hatası olur.
+
+	m1 = std::move(m2);
+
+ Oysa "move" memberlar olmasaydı "copy"e fallback olacaktı.
+
+<BURASI İÇİN BİR TABLO VAR>
+
+##13. Ders##
+
+
+
+
+
+
+
+
+
+
 
 
 
