@@ -1837,7 +1837,7 @@ Kaynakları çalınan nesnenin gösterdiği bellek alanı artık nullptr olacak,
 dangling pointer oluşturmayacak mı? İşte öyle bir kod yazacağız ki destructor'da kaynaklarının çalındığını anlayacak.
 Aynı şekilde str = s gibi bir atamada artık s nesnesinin gidici olduğunu biliyor ise o durumda da move assignment devreye girecek.
 
-Özetle yapılan iş: 	*deep copy yapmamak
+Özetle yapılan iş: 	*deep copy yapmak
 			*diğer nesnesnin kaynağını çalmak
 			*diğer nesne için destructor çağrıldığında kaynağın geri verilmemesini sağlamak.
 
