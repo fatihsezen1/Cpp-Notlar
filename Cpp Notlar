@@ -2215,9 +2215,294 @@ hatası olurdu. (Named Return Value Optimization (NRVO)) NRVO eski c++'ta da var
 ------------------------------------------------------------------------------
 conversion ctor (dönüştüren kurucu işlev)
 
--tek parametreli ctor'ların daha önce konuşmadığımız önemli bir özelliği var.
+-tek parametreli ctor'ların daha önce konuşmadığımız önemli bir özelliği var:
 
-13. Ders 1:21:55
+	#include <iostream>
+	
+	class Myclass {
+	public:
+	    Myclass() = default;
+	    Myclass(int x)
+	    {
+	        std::cout << "Myclass(int) x: " << x << '\n';
+	    }
+	    
+	};
+	
+	int main()
+	{
+	    Myclass m;
+	    m = 5;
+	}
+	
+	/*
+	    * Sınıfların tek parametreli ctor'ları nesneyi oluşturmanın dışında 
+	    parametresi olan türden (yukarıdaki örnekte int) bu sınıf türüne 
+	    (bu örnekte Myclass) örtülü (implicit) dönüşümü sağlıyor.
+	    Yani bu parametreli ctor sayesinde int -> Myclass implicit dönüşümü oluyor.
+	
+	    * Myclass(int) fonksiyonunu bildirdiğimde m = 5; kodu legal hale geldi.
+	    Burada int -> Myclass dönüşümünü bu fonksiyona çağrı yaparak gerçekleştiriyor.
+	
+	    * m = 5 ifadesinde aslında bir geçici nesne oluşturuluyor. Derleyici durumdan vazife
+	    çıkartarak Myclass(int) fonksiyonuna çağrı yaparak dönüşüm uyguluyor.
+	
+	    * Peki atama nasıl yapılıyor? move assignmet ile. (ama tablodan hatırla, copy assignment
+	    yazarsan move assignment not declared olur ve copy assignment ile atama yapılır.)
+	*/
+
+-user defined conversion sadece conversion constructor değil. 
+	* Biri şimdi gördüğümüz conversion ctor
+	* Diğeri ileride göreceğimiz tür dönüştürme operator fonksiyonu
+	  (type cast operator function) deniyor.
+		#include <iostream>
+		
+		class Nec {
+		public:
+		    operator int()const;    //örtülü olarak Nec -> int dönüştürüyor.
+		};
+		
+		int main()
+		{
+		    Nec mynec;
+		    int ival;
+		
+		    ival = mynec;
+		}
+	   	
+-user defined conversionu nasıl tanımladık: normalde standart olmayan öyle bir dönüşüm ki 
+  bu dönüşümün örtülü olarak yapılabilmesi için derleyici bir fonksiyonu kullanıyor.
+
+- Eğer bir örtülü dönüşüm (implicit conversion) önce standard conversion sonra user defined conversion
+  yapılarak uygulanabiliyorsa böyle yapılmak zorunda. Bu dilin kuralı.
+
+  Ya da bunun tersi olarak derleyici önce  user defined conversion sonra standard conversion uygulayabiliyorsa
+  bunu yapmak zorunda. (ilerde göreceğiz)
+
+  Eğer dönüşüm arka arkaya   user defined conversion +   user defined conversion olarak uygulanabiliyorsa bu
+  hiçbir zaman örtülü olarak yapılmaz.
+
+- örnek:
+	class Myclass {
+	public:
+	    Myclass();
+	    ~Myclass();
+	    Myclass(int);
+	    Myclass& operator=(const Myclass& r);
+	};
+	
+	int main()
+	{
+	    Myclass m;
+	    double dval{};
+	    m = dval;
+	}
+	
+	/*
+	    m = dval;
+	    m = flag;
+	
+	    Yukarıdaki kurallara göre bu ikisi geçerli mi? Evet. Çünkü bu  
+	    gerçekleşmesi için dval'in önce double'dan int'e dönüşümü gerçekleşmeli.
+	    Ve sonra da Myclass türüne dönüşüm gerçekleşmesi gerekiyor. 
+	    double -> int : standard conversion
+	    int -> Myclass: user-defined conversion
+	*/
+	--------------------------------------------------------------------------------
+	class Myclass {
+	public:
+	    Myclass(){};
+	    Myclass(bool);
+	};
+	
+	int main()
+	{
+	    Myclass m;
+	    m = "fatih sezen";
+	}
+	
+	/*
+	    Bu kodda görüldüğü gibi bu çok tehlikeli. Alakasız kodlar geçerli hale
+	    geliyor. Birbiri ile mantıksal açıdan alakasız türler standard conversion
+	    gerçekleştiği için standard conversion + user defined conversion oluyor.
+	    Yukardıda array decay ile const char* türünden bool türünde standard
+	    conversion oluyor. Sonra bu tür  Myclass(bool); fonksiyonuna çağrı yaparak
+   	    bool -> Myclass dönüşümü oluyor.
+	*/
+	--------------------------------------------------------------------------------
+- Son örnekteki problemin çözümü explicit constructor.
+- Bir ctor'u explicit anahtar sözcüğü ile bildirmek o ctor'u explicit ctor yapıyor.
+	class Myclass {
+	public:
+	    explicit Myclass(int x);
+	};
+- Bu ctor sadece explicit dönüşüme izin verir. Örtülü dönüşüme izin vermez. Bu ctor'larda dönüşüm
+  yapmak için type cast araçlarını kullanmamız gerekiyor. 
+	#include <iostream>
+	
+	class Myclass {
+	public:
+	    Myclass() = default;
+	    explicit Myclass(int x);
+	};
+	
+	int main()
+	{
+	    Myclass m;
+	    m = 5; //ERROR! artık örtülü dönüşüme izin yok.
+	}
+- SINIFIN TEK PARAMETRELİ CTOR'LARINI EXPLICIT YAP! (%100 OLMASA DA ÖZEL DURUMLAR HARİÇ BU BÖYLE.)
+	#include <iostream>
+	
+	class Myclass {
+	public:
+	    Myclass() = default;
+	    explicit Myclass(int x);
+	};
+	
+	int main()
+	{
+	    Myclass m;
+	    m = static_cast<Myclass>(5); 
+	}
+
+
+-constructor'u explicit yaptığınızda;
+
+	#include <iostream>
+	
+	class Myclass {
+	public:
+	    Myclass() = default;
+	    explicit Myclass(int x);
+	};
+	
+	int main()
+	{
+	    Myclass k(2);  //direct initialization sentaks hatası değil 
+	    Myclass m{7};  //direct list initialization sentaks hatası değil
+	    Myclass n = 4; //copy initialization sentaks hatası!!!!!!
+	}
+
+Buna standart kütüphaneden bir örnek:
+	    unique_ptr<int> uptr = new int; // sentaks hatası !!!!
+	    unique_ptr<int> uptr(new int); // sentaks hatası değil
+
+
+NOTLAR:
+-explicit anahtar sözcüğünü sadece bildirimde kullanacaksın. hem bildirim hem tanımda kullanmak sentaks hatası.
+-static anahtar sözcüğünü sadece bildirimde kullanacaksın. hem bildirim hem tanımda kullanmak sentaks hatası.
+-noexcept specifier'ı hem bildirimde hem tanımda kullanacaksın.
+
+	#include <iostream>
+	
+	class Myclass {
+	public:
+	    explicit Myclass(int);
+	    Myclass(double);
+	};
+	
+	int main()
+	{
+	    Myclass m = 12;
+	}
+	
+	/*
+	    Burada explicit ctor overload set'e dahil olmuyor. Bu kodda sentaks hatası
+	    yok. double parametreli ctor çağrılır.
+	*/
+
+- Her sınıfın tek parametreli ctor'unun explicit olmasına gerek yok. Bazı durumlarda explicit olmaması daha 
+  uygun görülmüş. Örneğin:
+
+		string str = "Fatih Sezen";	//Legal. Explicit olsaydı error olurdu.
+
+
+------------------------------------------------------------------------------------------------------------------------------
+
+Delegating Constructor
+
+- C++11 ile birlikte dile eklendi.
+- Delege yapıcı fonksiyon çağrımı aslında bir yapıcı fonksiyonun diğerini çağırabilmesi özelliğidir. 
+- Ortak kodları bir yerde toplamak için kullanılan bir araç. 
+- Modern c++'dan önce sınıfa bir private bir fonksiyon ekleyip bunun içine ortak kodu yazıyorduk.
+- Bunun dezavantajları : 
+   - bu fonksiyonun private olması client'ların çağırmasını engelliyor ama biz sadece
+     construuctorların çağırabilmesini isterdik.
+   - örneğin init ismini verdiğimiz bu fonksiyonu ctor içinde çağırdık. Ama zaten çoktan non static
+     data memberlar hayata gelmiş oluyor.
+- Delege yapıcı fonksiyon çağrımı MIL sentaksında yapıcı fonksiyonun belirtilmesiyle sağlanmaktadır.
+- MIL sentaksının yalnızca delege yapıcı fonksiyon çağrımını içermesi gerekmektedir.	
+	Myclass(int x) : Myclass(x, x) , mz{123}{} //GEÇERSİZ!
+- Bir yapıcı fonksiyonun MIL sentaksında delege yapıcı fonksiyon çağrımı varsa önce delege yapıcı fonksiyon 
+  çağrılır sonra o yapıcı fonksiyonun ana bloğu işletilir. 
+- Tabii bir yapıcı fonksiyon başka bir yapıcı fonksiyonu o da başka bir yapıcı fonksiyonu çağırabilir. 
+- Ancak bu çağrımlar sırasında döngsüsel bir durum durum oluşursa programın akışı sonsuz döngüye girebilir. 
+- Bu durum genel olarak "tanımsız davranış (undefined behavior)" oluşturmaktadır.
+
+		#include <iostream>
+		
+		using namespace std;
+		
+		class Sample {
+		public:
+			Sample();
+			Sample(int x);
+			Sample(int x, int y);
+			void disp();
+		
+			int a;
+			int b;
+			//...
+		};
+		
+		Sample::Sample() : Sample(10, 20)
+		{
+			cout << "default constructor" << endl;
+		}
+		
+		Sample::Sample(int x) : Sample(x, 10)
+		{
+			cout << "int constructor" << endl;
+		}
+		
+		
+		Sample::Sample(int x, int y) 
+		{
+			// ortak yapılması gereken şeylerü
+			cout << "common codes..." << endl;
+		
+			cout << "int, int constructor" << endl;
+		
+			a = x;
+			b = y;
+		}
+		
+		void Sample::disp()
+		{
+			cout << a << ", " << b << endl;
+		}
+		
+		int main()
+		{
+			Sample s;
+			Sample k(10);
+		
+			s.disp();
+			k.disp();
+		
+			return 0;
+		}
+
+------------------------------------------------------------------------------------------------------------------------------
+friend declarations 
+- Başka kodların private elemanlarına erişimi geçerli kılıyor.
+- Global bir fonksiyon ya da başka bir sınıfın üye fonksiyonu bir sınıfın friend fonksiyonu yapılabilir. 
+- Bir sınıfın tamamına friend'lik verilebilir. Oradaki tüm fonksiyonlar sınıfın private bölümüne erişebilir.
+
+##14. Ders##
+
+
 
 
 
