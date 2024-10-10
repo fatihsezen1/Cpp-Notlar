@@ -2553,7 +2553,7 @@ Operator Overloading
 - C'de structlar 4 operatorun operandı olabilirdi. ".", "&", "sizeof", "=" .
 - C++'da sınıf türünden nesneler operand yapıldığında derleyici durumdan vazife çıkararak "operator function(s)" lara
   çağrı yapıyor.
-- "Operator function"lar global (free) function da olabilir sınıfın non-static member function'u da olabilir.
+- "Operator function"lar global (free) function da olabilir sınıfın non-static member function'u da olabilir.(static olamaz)
 - compile time'a ait bir mekanizma.
 - operatorlerin primitive türler için (tamsayı türleri, gerçek sayı türleri, pointer türleri gibi...) verdiği doğal
   bir çağrışım var. ival + ival2 gibi... 
@@ -2572,7 +2572,103 @@ Kısa Notlar
 - Tüm operator fonksiyonları isimleriyle de çağrılabilir.
 - Bir operator fonksiyonu hariç operator fonksiyonları default arguman alamazlar. Function call operatoru default
   arguman alabilir.
-- Operatorlerin "arity"si değiştirilemez. Yani unary/binary olması değiştirilemez. 1.07.57
+- Operatorlerin "arity"si değiştirilemez. Yani unary/binary olması değiştirilemez.
+	binary için : 
+	matrix x,y;
+	global fonksiyon ise iki parametresi olacak, üye fonksiyon ise tek parametresi olacak(ilk parametre this zaten). 
+	Aksi halde sentaks hatası.
+
+	unary için :
+	!uniqueptr;
+	global ise bir parametresi olacak, üye fonksiyon ise parametresiz olacak. Aksi halde sentaks hatası.
+
+- şu dört operatorun iki anlamı var. Dolayısıyla iki overload'ı da olabilir. Parametre sayısı açısında şaşırma.
+	x + y	 
+	+x 	//sign op
+
+	x - y	//subtraction op
+	-x	//sign op
+
+	x & y	//bitwise and
+	&x	//addres of 
+
+	x * y	//multiplication op
+	*p	//dereferencing op
+
+- operator overload fonksiyonlarında function overload olabilir:
+	örnek:	
+		class Bigint;
+		Bigint operator+(int)const;
+		Bigint operator+(long)const;
+		Bigint operator+(long long)const;
+		
+	örnek:
+		int x = 10;
+		double dval = 3.4;
+		operator<<(cout.operator<< (x), "\n');
+		operator<<(cout.operator<< (dval), '\n');
+
+- operator oncelik seviyesi ve öncelik yönü değiştirilemez.
+
+- global operator fonksiyonları neden var?
+
+	 1. Sebep: sol operandın sınıf türünden olmaması durumunda onun bir üye fonksiyonu olamaz.
+		örnek:
+		x + 5	->	x.operator+(5);
+	
+		5 + x	->	Bunu ancak global operator fonksiyonlarıyla gerçekleştirebiliriz.
+	
+	 2. Sebep: bana ait olmayan bir sınıfla işlem yaparken... Örneğin bir matrixi standart çıkış akımına yazdırmak isteyelim:
+		
+		#include <iostream>
+		
+		class matrix {
+		
+		};
+		
+		std::ostream& operator<<(std::ostream&, const matrix);
+		
+		int main()
+		{
+		    matrix x;
+		    std::cout << x; //inserter
+		}
+
+- Şu tarz fonksiyonlarda geri dönüş değeri türü sınıf türünden olmalı. 
+	class matrix {
+	public:
+	    matrix operator+(const matrix&)const{
+	
+	    }
+	};
+
+  matrix& yapmaya çalışma. Çünkü yerel nesne referansı döndürmek tanımsız davranış. 
+  Dinamik nesne olsa kim free edecek o da saçma. Bu şekilde maliyetli olur diye düşünüyorsan...:
+	* Eğer return statementtaki ifade PR value ise mandotory copy elision olacak.
+	* Sonucu tutacak otomatik ömürlü bir nesne ise Named Return Value Optimization'u bloke eden
+	  bir ifade değilse o zaman zaten NRVO yapacak. Hadi onu da yapamıyor.
+	* O zaman da move semantik devreye girecek.
+
+- c++ core guidelines önerdi. convension'dan tutun const correctness'a kadar olan bir rehber. Huawei C++ standards gibi...
+
+- "+" operatoru de "=" operatoru de overload edilmişse "+=" operatoru de otomatik overload edilir mi? HAYIR! Bu diğerleri için
+  de geçerli.
+
+- C++20 ile birlikte "==" yazdığınız zaman "!=" operator overloadini yazmamıza gerek yok.
+
+
+##15. Ders##
+
+
+
+
+
+
+
+
+
+
+
 
 
 
