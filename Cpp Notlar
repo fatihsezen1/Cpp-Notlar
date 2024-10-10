@@ -2494,25 +2494,85 @@ Delegating Constructor
 			return 0;
 		}
 
-------------------------------------------------------------------------------------------------------------------------------
+
+
+##14. Ders##
+
 friend declarations 
 - Başka kodların private elemanlarına erişimi geçerli kılıyor.
 - Global bir fonksiyon ya da başka bir sınıfın üye fonksiyonu bir sınıfın friend fonksiyonu yapılabilir. 
 - Bir sınıfın tamamına friend'lik verilebilir. Oradaki tüm fonksiyonlar sınıfın private bölümüne erişebilir.
 
-##14. Ders##
+	class Myclass {
+	public:
+	    friend int foo(int); // global'deki bir fonksiyonu friend olarak bildirdik
+	private:
+	    int mx;
+	    void bar();
+	};
+	
+	int foo(int)
+	{
+	    Myclass m;
+	    auto val = m.mx; // geçerli
+	    m.bar(); // geçerli
+	}
 
+- friend bildirimi public, private, protected nerede tanımladığın hiçbir şeyi değiştirmiyor.
+- friend fonksiyonları sınıfın içinde tanımlayabiliyoruz. Bunun önemini ilerde konuşacağız.
+- friend fonksiyonu  global ise derleyici tanımını görmeden friendliği geçerli sayar.
+- ancak başka bir sınıfın bir fonksiyonu friend ise onun tanımını görmeli. Forward decleration da yetmiyor.
 
+	class Nec;
+	
+	class Myclass {
+	public:
+	    friend int Nec::foo(); //invalid friend decleration. Bildirimi görmesi gerekiyor.
+	    friend int foo(int); // global'deki bir fonksiyonu friend olarak bildirdik, tanımına gerek yok.
+	private:
+	    int mx;
+	    void bar();
+	};
 
+- class'ı friend yapmak için bildirim ya da tanım gerekmiyor. 
 
+	class Myclass {
+	public:
+	    friend class Nec;	// Nec'in bütün üye fonksiyonları Myclass'ın private bölümüne erişebilecek.
+	    
+	};
 
+- Burada tabii ki A'nın B'ye friendlik vermesi B'nin de A'ya friendlik verdiği anlamına gelmiyor.
+- A -> B -> C burada C'nin üye fonksiyonları tabii ki A'nın private bölümüne erişemez.
+- Bir sınıfın tüm private bölümünü değil de bir kısmını friendlik verebilir miyim? Bunu direkt olarak
+  yapacak bir araç yok ama Attorney-client idiom'uyla bunu gerçekleştirebiliriz.
 
+------------------------------------------------------------------------------------------------------------
+Operator Overloading
 
+- C'de structlar 4 operatorun operandı olabilirdi. ".", "&", "sizeof", "=" .
+- C++'da sınıf türünden nesneler operand yapıldığında derleyici durumdan vazife çıkararak "operator function(s)" lara
+  çağrı yapıyor.
+- "Operator function"lar global (free) function da olabilir sınıfın non-static member function'u da olabilir.
+- compile time'a ait bir mekanizma.
+- operatorlerin primitive türler için (tamsayı türleri, gerçek sayı türleri, pointer türleri gibi...) verdiği doğal
+  bir çağrışım var. ival + ival2 gibi... 
+- Örneğin complex sınıfı türünden iki nesne toplanamaz mı? Bu gibi durumlar için sınıf türlerinin algısal açıdan kolay 
+  bir şekilde implementasyonu için operator overloading mekanizmasını kullanıyoruz.
 
-
-
-
-
+Kısa Notlar
+- Operandlardan en az biri bir sınıf türünden veya enum türünden olmalı. (enum türü olması özel bir durum.)
+- Olmayan operatorun yüklemesi olamaz. Örneğin a1 @ a2 olamaz.
+- İsimlendirme şöyle olmak zorunda. Örneğin operator+ , operator[] , operator* , operator=   gibi...
+- Bazı operatorlerin overloadingi yasaklanmış: (sizeof) , (.) , (? :) (ternary operator) , (::) (scope resolution) ,
+  (.*) 
+- Bazı operatorler free function olamıyor. Sadece sınıfın üye fonksiyonu olarak overload edilmesi gerekiyor.
+  Örneğin: () function call operator, [] subscript operator, -> member selection arrow, = assignment operator
+           ve typecast operators
+- Tüm operator fonksiyonları isimleriyle de çağrılabilir.
+- Bir operator fonksiyonu hariç operator fonksiyonları default arguman alamazlar. Function call operatoru default
+  arguman alabilir.
+- Operatorlerin "arity"si değiştirilemez. Yani unary/binary olması değiştirilemez. 1.07.57
 
 
 
