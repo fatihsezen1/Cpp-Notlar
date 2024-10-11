@@ -2659,6 +2659,77 @@ Kısa Notlar
 
 ##15. Ders##
 
+- Operator fonksiyonlarını yazarken önemli bir seçim kriteri var:
+1-Bunlar friend function olarak class definition içinde mi implemente edilsin?
+2-Yoksa bunlar sadece bildirilip .cpp dosyasında mı tanımlansın?
+
+Biz 1 no.'luyu seçtik. Bunu yapmamızın önemli nedenlerinden biri bu fonksiyonları "hidden friend" haline getirmek. 
+Friend yapmamızın iki  tane önemli sonucu var:
+Birincisi: global yapacağım operator fonksiyonu sınıfın private bölümüne erişemez. Erişemezse örneğin toplama işleminde
+	   neyi toplayacak? O yüzden friendlik vermem lazım.
+İkincisi: 34.46
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
