@@ -2667,15 +2667,202 @@ Biz 1 no.'luyu seçtik. Bunu yapmamızın önemli nedenlerinden biri bu fonksiyo
 Friend yapmamızın iki  tane önemli sonucu var:
 Birincisi: global yapacağım operator fonksiyonu sınıfın private bölümüne erişemez. Erişemezse örneğin toplama işleminde
 	   neyi toplayacak? O yüzden friendlik vermem lazım.
-İkincisi: 34.46
+
+			
+		#include <iostream>
+		#include <ostream>
+		#include <istream>
+		
+		class Mint {
+		public:
+			Mint() = default;
+			explicit Mint(int x) : mval{x}{}
+			
+			friend [[nodiscard]] Mint operator+(const Mint& lhs, const Mint& rhs)
+			{
+				return Mint(lhs) += rhs;
+			}
+			friend Mint operator-(const Mint& lhs, const Mint& rhs);
+			friend Mint operator*(const Mint& lhs, const Mint& rhs);
+			friend Mint operator/(const Mint& lhs, const Mint& rhs);
+		
+			friend bool operator==(const Mint& lhs, const Mint& rhs);
+			friend bool operator!=(const Mint& lhs, const Mint& rhs);
+			friend bool operator<(const Mint& lhs, const Mint& rhs);
+			friend bool operator<=(const Mint& lhs, const Mint& rhs);
+			friend bool operator>(const Mint& lhs, const Mint& rhs);
+			friend bool operator>=(const Mint& lhs, const Mint& rhs);
+		
+			Mint& operator+=(const Mint& other)
+			{
+				mval += other.mval;
+				return *this;
+			}
+			Mint& operator-=(const Mint& other);
+			Mint& operator*=(const Mint& other);
+			Mint& operator/=(const Mint& other);
+			Mint& operator%=(const Mint& other);
+		
+			/*
+			gdd değeri neden std::ostream& ?
+			Başka ifadelerin değerini verebilmem için (cout << mymint) burada 
+			çağrılan nesnenin değeri stream nesnesinin kendisi olması gerekiyor.
+			*/
+			friend std::ostream& operator<<(std::ostream& os, const Mint& m) // inserter
+			{
+				return os << '[' << m.mval << ']';
+			}
+		
+			friend std::istream& operator>>(std::istream& is, Mint& m)
+			{
+				return is >> m.mval;
+			}
+		
+		private:
+			int mval{};	
+		};
+		
+		int main()
+		{
+			std::cout << "deneme";
+			return 0;
+		}
+
+	
+
+------------------------------------------------------------------------------------------------------------------------
+
+++x;	// nesnenin değerinin bir fazlasını üretiyor
+x++;	// nesnenin değerini üretiyor 
+
+--y;	// nesnenin değerinin bir eksiğini üretiyor
+y--;	// nesnesinin değerini üretiyor
 
 
+C'de:
+++x ve y++ 		// R Value expr
+--x ve y-- 		// R Value expr
+
+C++'da:
+++x			// L value expr
+x++			// R value expr
+
+--x			// L value expr
+x--			// R value expr
 
 
+operator fonksiyonlarında önek ve sonek ++ ve -- fonksiyonlarının ayırt edilmesi ve geri dönüş değerleri meselesi...
+
+Burada imzaları farklı kılmak için bir kural uydurulmuş.
+
+//operator++() 			//önek
+//operator++(int) 		//sonek
+
+Bu parametreye pratikte arguman da geçmeyeceksin isim de vermeyeceksin. (illa vereceksen 0) Bu sadece imzayı farklı 
+kılıp önek, sonek ayrımını yapmak için uydurulmuş bir kural.
+
+önek ++'nın ürettiği değer L value expr
+sonek ++'nın ürettiği değer R value expr	olduğu için gdd'ler şöyle olacak:
+
+Mint& operator++() 			//önek
+Mint operator++(int) 			//sonek
+
+Mint& Mint::operator++() //önek
+{
+	++mval;
+	return *this;
+}
+
+Mint& Mint::operator++(int) //sonek
+{
+	Mint retval{ *this };
+	++*this;
+	return retval;
+}
+
+-----------------------------------------------------------------------
+sign operator olan "+" ve "-" ...
+
+Mint Mint::operator+()const
+{
+	return *this;
+}
+
+Mint Mint::operator-()const
+{
+	return Mint(-mval);
+}
+
+-----------------------------------------------------------------------
+logic değil operatoru...
+
+[[nodiscard]] bool operator!()const
+{
+	return static_cast<bool>(mval);
+}
+
+-----------------------------------------------------------------------
+array like sınıfların da kullandığı "[]" operator overloadı:
+
+ar[i]			ar.operator[](i);
+vec[5]			ar.operator[](5);
+str[val]		ar.operator[](val);
+
+-bunlar L value referense type üretmeli
+ama mesela ar'ın elemanları int ise int gdd olmalı ya da str yazı tutuyorsa str[val] gdd si char& olmalı...
+
+- const üye fonksiyon çağrılırsa const overloadı çağrılacak
+
+char& operator[](std::size_t idx);
+const char& operator[](std::size_t idx)const;
+
+Normalde C'de ar[5] ya da 5[ar] yazdığımızda bir sentaks hatası oluşmuyordu.
+Ama operator overloading olarak "[]" kullanıldığında artık 5[ar] gibi bir ifade yazamıyoruz.
+Artık array decay de yok:	ar + 3 gibi bir ifade de geçersiz.
+
+-----------------------------------------------------------------------
+reference qualifiers
+	
+	class Bigint {
+	public:
+		// void func();	// Bu haliyle R value ile de L value ile de çağrılabilir.
+		void func()&;	// Bu fonksiyon sadece  L value ile çağrılabilir.
+	};
+	
+	int main()
+	{
+		A ax;
+		ax.func();	// legal
+		A{}.func();	// Sentaks Hatası! A{} ifadesi geçici nesne oluşturuyor yani PR value ref.
+				// Dolayısıyla reference qualifier'lı fonksiyonu çağıramam.
+	}
+
+Tam Tersi de mümkün:
+
+	class Bigint {
+	public:
+		// void func();	// Bu haliyle R value ile de L value ile de çağrılabilir.
+		void func()&&;	// Bu fonksiyon sadece  R value ile çağrılabilir.
+	};
+	
+	int main()
+	{
+		A ax;
+		ax.func();	// Sentaks Hatası! ax ifadesi L value ref.
+				
+		A{}.func();	// Legal
+	}
 
 
+Sonuç olarak şu şekilde 3 tane overload oluşturabilirim:
 
+	void func()const;
+	void func()&&;
+	void func()&;
 
+Bunu kullanarak R value expr için farklı bir implementasyon, L value expr için farklı bir implementasyon kullanabilirim.
+------------------------------------------------------------------------------------------------------------------------
+##16. Ders##
 
 
 
