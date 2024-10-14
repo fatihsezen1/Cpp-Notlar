@@ -2865,107 +2865,109 @@ Bunu kullanarak R value expr için farklı bir implementasyon, L value expr içi
 ##16. Ders##
 
 
-#include <iostream>
-#include <ostream>
-#include <istream>
-
-class Mint {
-public:
-	Mint() = default;
-	explicit Mint(int x) : mval{x}{}
+	#include <iostream>
+	#include <ostream>
+	#include <istream>
 	
-	friend [[nodiscard]] Mint operator+(const Mint& lhs, const Mint& rhs)
+	class Mint {
+	public:
+		Mint() = default;
+		explicit Mint(int x) : mval{x}{}
+		
+		friend [[nodiscard]] Mint operator+(const Mint& lhs, const Mint& rhs)
+		{
+			return Mint(lhs) += rhs;
+		}
+		friend Mint operator-(const Mint& lhs, const Mint& rhs);
+		friend Mint operator*(const Mint& lhs, const Mint& rhs);
+		friend Mint operator/(const Mint& lhs, const Mint& rhs);
+	
+		friend bool operator==(const Mint& lhs, const Mint& rhs);
+		friend bool operator!=(const Mint& lhs, const Mint& rhs);
+		friend bool operator<(const Mint& lhs, const Mint& rhs);
+		friend bool operator<=(const Mint& lhs, const Mint& rhs);
+		friend bool operator>(const Mint& lhs, const Mint& rhs);
+		friend bool operator>=(const Mint& lhs, const Mint& rhs);
+	
+		Mint& operator+=(const Mint& other)
+		{
+			mval += other.mval;
+			return *this;
+		}
+		Mint& operator-=(const Mint& other);
+		Mint& operator*=(const Mint& other);
+		Mint& operator/=(const Mint& other);
+		Mint& operator%=(const Mint& other);
+	
+		/*
+		gdd değeri neden std::ostream& ?
+		Başka ifadelerin değerini verebilmem için (cout << mymint) burada 
+		çağrılan nesnenin değeri stream nesnesinin kendisi olması gerekiyor.
+		*/
+		friend std::ostream& operator<<(std::ostream& os, const Mint& m) // inserter
+		{
+			return os << '[' << m.mval << ']';
+		}
+	
+		friend std::istream& operator>>(std::istream& is, Mint& m)
+		{
+			return is >> m.mval;
+		}
+	
+	private:
+		int mval{};	
+	};
+	
+	int main()
 	{
-		return Mint(lhs) += rhs;
+		std::cout << "deneme";
+		return 0;
 	}
-	friend Mint operator-(const Mint& lhs, const Mint& rhs);
-	friend Mint operator*(const Mint& lhs, const Mint& rhs);
-	friend Mint operator/(const Mint& lhs, const Mint& rhs);
-
-	friend bool operator==(const Mint& lhs, const Mint& rhs);
-	friend bool operator!=(const Mint& lhs, const Mint& rhs);
-	friend bool operator<(const Mint& lhs, const Mint& rhs);
-	friend bool operator<=(const Mint& lhs, const Mint& rhs);
-	friend bool operator>(const Mint& lhs, const Mint& rhs);
-	friend bool operator>=(const Mint& lhs, const Mint& rhs);
-
-	Mint& operator+=(const Mint& other)
-	{
-		mval += other.mval;
-		return *this;
-	}
-	Mint& operator-=(const Mint& other);
-	Mint& operator*=(const Mint& other);
-	Mint& operator/=(const Mint& other);
-	Mint& operator%=(const Mint& other);
-
-	/*
-	gdd değeri neden std::ostream& ?
-	Başka ifadelerin değerini verebilmem için (cout << mymint) burada 
-	çağrılan nesnenin değeri stream nesnesinin kendisi olması gerekiyor.
-	*/
-	friend std::ostream& operator<<(std::ostream& os, const Mint& m) // inserter
-	{
-		return os << '[' << m.mval << ']';
-	}
-
-	friend std::istream& operator>>(std::istream& is, Mint& m)
-	{
-		return is >> m.mval;
-	}
-
-private:
-	int mval{};	
-};
-
-int main()
-{
-	std::cout << "deneme";
-	return 0;
-}
 
 ------------------------------------------------------------------------------------------------
 
-#include <iostream>
-
-class Mint;
-
-class MintPtr {
-public:
-	explicit MintPtr(Mint* p) : mp(p){}
-	~MintPtr()
-	{
-		if (mp)
+dereferencing & member selection (arrow) operator fonksiyonları
+	
+	#include <iostream>
+	
+	class Mint;
+	
+	class MintPtr {
+	public:
+		explicit MintPtr(Mint* p) : mp(p){}
+		~MintPtr()
+		{
+			if (mp)
+				delete mp;
+		}
+	
+		// MintPtr(const MintPtr&) = delete;
+		// MintPtr& operator=(const MintPtr&) = delete;
+		//move memberlardan birini bildirmek copy'leri derleyici tarafından delete eder.
+		MintPtr(MintPtr&& other) : mp(other.mp)
+		{
+			other.mp = nullptr;
+		}
+		MintPtr& operator=(MintPtr&& other)
+		{
 			delete mp;
-	}
-
-	// MintPtr(const MintPtr&) = delete;
-	// MintPtr& operator=(const MintPtr&) = delete;
-	//move memberlardan birini bildirmek copy'leri derleyici tarafından delete eder.
-	MintPtr(MintPtr&& other) : mp(other.mp)
-	{
-		other.mp = nullptr;
-	}
-	MintPtr& operator=(MintPtr&& other)
-	{
-		delete mp;
-		mp = other.mp;
-		other.mp = nullptr;
-	}
-
-	Mint& operator*() //*ptr yapınca L val expr olması lazım o yüzden g.d.d. T& türden
-	{
-		return *mp;
-	}
-
-	Mint* operator->()
-	{
-		return mp;
-	}
-
-private:
-	Mint* mp;
-};
+			mp = other.mp;
+			other.mp = nullptr;
+		}
+	
+		Mint& operator*() //*ptr yapınca L val expr olması lazım o yüzden g.d.d. T& türden
+		{
+			return *mp;
+		}
+	
+		Mint* operator->() // -> op. fonks. g.d.d %99 pointer olmalı.
+		{
+			return mp;
+		}
+	
+	private:
+		Mint* mp;
+	};
 
 
 ------------------------------------------------------------------------------------------------
