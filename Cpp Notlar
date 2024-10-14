@@ -2972,6 +2972,149 @@ dereferencing & member selection (arrow) operator fonksiyonları
 
 ------------------------------------------------------------------------------------------------
 
+-fonksiyon çağrı operator fonksiyon default arguman da alabilir. Diğer overload 
+fonksiyonları alamaz. 
+
+    class Myclass {
+    public:
+        int operator()(int x);
+    };
+    //...
+    Myclass mc;
+    mc(5);
+    
+-fonksiyon çağrı operatoru overloadu ne işe yarıyor? Generic Programlamada işe yarayacak.
+
+--------------------------------------------------------------------------------
+type cast operator fonksiyonları
+
+Eğer dilin kuralları gereği zaten yapılacaksa buna "standard conversion" deniyor.
+Eğer dönüşüm bizim yazdığımız bir fonksiyona çağrı yapmak suretiyle gerçekleşiyorsa
+buna "user-defined conversion" deniyor. Şimdiye kadar "conversion ctor" ile yapmayı gördük.
+Şimdi 2. yolunu göreceğiz: tür dönüştürme operator fonksiyonu. Bu fonksiyon member fonksiyon
+olmak zorunda.
+
+Hangi fonksiyonlar member fonksiyon olmak zorunda?
+    * subscript operator fonksiyonu
+    * member selection arrow
+    * assignment operator fonksiyonu
+    * fonksiyon çağrı operator fonksiyonu
+    * tür dönüştürme operator fonksiyonu
+
+
+    #include <iostream>
+
+    class Myclass {
+    public:
+        operator int()const
+        {
+            std::cout << "Myclass:operator int()\n";
+            return 4;
+        }
+    };
+
+    int main()
+    {
+        Myclass mc;
+        int ival{};
+
+        ival = mc;
+        std::cout << "ival = " << ival << '\n';	//ival = 4
+    }
+
+
+    /*
+    -g.d.d. yazılmama sebebi boşuna yazılmak istenmemesi. 
+    -operator <hedef_tür>()
+    -sınıf türünden hedef türüne örtülü dönüşüm yapar. (burada Myclass -> int)
+    -const olup olmaması kararı bize ait.
+    -hedef tür istediğim tür olabilir.
+    */
+
+
+
+- explicit anahtar sözcüğü kullanıldığında örtülü dönüşüme izin vermez:
+
+    #include <iostream>
+
+    class Myclass {
+    public:
+        explicit operator int()const;
+    };
+
+    int main()
+    {
+        Myclass mc;
+        int ival{};
+
+        //ival = mc;	                //error
+        ival = static_cast<int>(mc);    // legal
+        ival = (int)mc;                 // legal
+        ival = int(mc);                 // legal
+        ival = mc.operator int();       // legal
+
+    }
+
+- explicit anahtar sözcüğü sadece conversion ctor ve tür dönüştürme operator fonksiyonlarında
+kullanılabiliyor.
+
+-hedef tür primitive tür olmak zorunda değil. Başka bir sınıf türü de olabilir.
+
+-hedef türün function pointer type olması durumunda bunun tür eş ismini hedef türe yazmalıyım.
+
+    using fptr = int(*)(int);
+
+    class Nec {
+    public:
+        operator fptr()const;
+    }
+
+
+-----------------------------------
+
+#include <iostream>
+#include <cstdlib>
+
+class Fraction {
+public:
+Fraction(int nom = 0, int den = 1): m_nom(nom), m_den(den) {}
+
+operator double()const
+{
+	return static_cast<double>(m_nom) / m_den;
+}
+
+private:
+	int m_nom, m_den;
+
+};
+
+int main()
+{
+	Fraction f1(3, 7);
+	Fraction f2(3);
+	Fraction f3;
+	double dval = f1;
+}
+
+-----------------------------------
+ya da örneğin bir başka kullanım senaryosu:
+
+string str {"fatih sezen"};
+const char* p = str.c_str();
+-----------------------------------
+ya da örneğin bir başka kullanım senaryosu:
+
+int x = 10;
+reference_wrapper r = x; // operator int&() fonksiyonuna çağrı yapılıyor
+++r;
+cout << "x = " << x << '\n';    // 11 basar
+--------------------------------------------------------------------------------------------------------------------------------------------
+##17. Ders##
+
+
+
+
 
 
 
