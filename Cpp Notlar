@@ -3282,6 +3282,145 @@ adresi this pointer olacak sekilde sinifin ctor'una cagri yapiyor.
   Bir diger problem de dangling pointer olusur.
 
 
+---------------------------------------------------
+placement new
+
+-new ile tahsis ettigim alan benim ona verdigim dizinin adresini versin istiyorum.
+
+	unsigned char buf(sizeof(Myclass));
+	std::cout << "adres: " << static_cast<void*>(buf) << '\n';
+	auto p = new (buf)Myclass;	// this pointeri buf'in adresini gostersin
+	std::cout << "p: " << p << '\n';
+	
+	//placement new ile yapilan tahsisati delete ile bosaltamayiz. Dtor'u direkt
+	//cagirdigimiz nadir senaryolardan biri.
+	p->~Myclass();
+
+------------------------------------------------------
+Siniflarin static veri elemanlari
+
+	class Nec {
+
+		static int x
+	};
+
+- kac tane Nec turunden nesne olursa olsun bir tane x degiskeni var. isim aramada degisen bir sey yok.
+- static int x; in ayri storage'i var.sinif storageini artirmaz. class scopeta erisim kontrolu var .
+- burada x'in sadece bildirimini yapiyoruz. Tanimlanmasi cpp dosyasinda soyle yapilabilir:
+	int Nec::x{};
+- static veri elemani public olursa herkes erisip degerini degistirebilir. Cogunlukla private olacak.
+- public olan static veri elemanlari genellikle const ya da constexpr olacak.
+- static data memberlarin sinif icinde tanimlanmasi sentaks hatasi:
+
+	class Nec {
+		static int x = 6; // ERROR!
+	};
+
+- Sadece iki kosul saglaniyorsa bu olabilir
+	* const olacak.
+	* integral type olacak
+
+	class Nec {
+		const static int x = 6; // Legal
+	};
+
+-normalde baslik dosyasina "int x = 5;" tanimlamasini koyarsak ODR cignenmis olur.
+-C++17 ile birlikte tipki fonksiyonlarda oldugu gibi global degiskenleri inline yaparsan ODR cignenmez.
+
+	inline int x = 5;	// include edenlerin hepsindeki x ayni x olur. (header only library olusturabilirsin)
+
+- ayni kural siniflarin static veri elemanlari icin gecerli
+
+	class Nec {
+		inline static double x = 6; // Legal, integral type olma zorunlulugu da yok
+	};
+
+- const uye fonksiyon sinifin static veri elemanini degistirebilir.
+
+- sinif disinda static memberi kullanmak icin isim arama + erisim kontrolu gecmesi gerekiyor.
+
+- static data member neden kullanilabilir?
+	* o sinif turunden kac nesne var sayisini tutmak icin
+	* uye fonksiyonlarin ortaklasa kullanacagi bir lookup table olabilir
+
+- sinifin static uye fonksiyonlarini sinif icinde bildirirken static keyword olacak
+  tanimlamada olmayacak.
+
+- sinifin static uye fonksiyonlarini sinif icinde inline olarak tanimlayabilirim.
+
+- static uye fonksiyonlarin const veya non-const olma durumu yok. Cunku staticlik sinifin kendisi ile ilgili
+  sinif turunden nesne ile ilgili degil.
+
+- static uye fonksiyonunda this pointeri yok cunku static uye fonksiyonlari bir nesne icin cagrilmiyor.
+
+  Asagidaki kodda sentaks hatasi olmasinin sebebi mx nesnesini bulamamasi degil. mx ile iliskilendirilecek bir 
+  nesnenin olmayisi:
+
+	class myclass {
+	public:
+		static int foo()
+		{
+			mx = 22; //a nonstatic member reference must be relative to a specific object
+
+		}
+	private:
+		int mx;
+	};
+
+	tabiki mx sttatic olsa sentaks hatasi olmazdi!!!!
+
+
+- Ayni mantiktan mutevellit static uye fonksiyonun non-static uye fonksiyonu cagirmasi sentaks hatasi olusturacakti.
+Cunku static uye fonksiyonunun bir this nesnesi yok. (tersi sentaks hatasi degil.)
+
+	class myclass {
+	public:
+		 int foo()
+		{
+		
+		}
+
+		 static int bar()
+		{
+			foo(); //ERROR!  a nonstatic member reference must be relative to a specific object
+
+		}
+	private:
+		int mx;
+	};
+
+- Sinifin static veri elemanina ilkdeger veren fonksiyon once class scope'ta araniyor. o yuzden asagidaki kodun ciktisi 1;
+
+
+	#include <iostream>
+
+	class myclass {
+	public:
+		 static int foo()
+		{
+			 return 1;
+
+		}
+
+		static int mx;
+	};
+
+	int foo()
+	{
+		return 8;
+	}
+
+
+	int myclass::mx = foo(); // once class scope oldguu icin cikti 1
+	//int myclass::mx = ::foo(); // ancak boyle cikti 8 olurdu.
+	int main()
+	{
+		std::cout << myclass::mx << '\n';
+	}
+
+
+------------------------------------------------------------------------------------------------
+##18. Ders##
 
 
 
