@@ -3124,6 +3124,121 @@ Tür dönüştürme operator fonksiyonları:
         explicit operator int();
     }
 
+- pointermış gibi kullanılabilen sınıflar <örneğin smartptr gibi> nullptr oluşturmak
+  için operator bool fonksiyonunu overload ediyorlar. Böylece lojik ifade beklenen 
+  yerlerde biz sınıf türünü kullanabiliyoruz.
+
+- Bu operator bool fonksiyonlarını explicit yapmazsak örtülü dönüşüme izin verilir:
+
+    struct Nec {
+        explicit operator bool()const;
+    };
+
+    int main()
+    {
+        Nec mnec;
+        int x = mnec;   // önce operator bool çağrılır sonra bool -> int dönüşümü olur.
+
+        // hatta
+        Nec n1, n2;
+        auto x = n1 + n2; // bu legal çünkü ilk önce bunun gerçekleşebileceği bir dönüşüme
+                        // var mı diye bakıyor. Sonra dönüşümü yapıp işlemi yapıyor.
+                        // Sonra integral promotion olacak ve x int türden 2 değerini alacak.
+    }
+
+    Yani "explicit operator bool()const;" fonksiyonunu yazdıktan sonra sınıf nesnesini pure C'deki
+    ifadeler gibi aynen kullanabilirim:
+
+        * !expr
+        * expr1 && expr2
+        * expr1 || expr2
+        * expr ? op2 : op 3
+        * if (expr)
+        * while(expr)
+        * do while(expr)
+        * for(;expr;)
+
+    Lojik bağlam olan bu yerlerde explicit olsa da direkt kullanabilirim. Ama lojik bağlam 
+    değilse örtülü dönüşüme izin yok.
+
+    Örneğin aşağıdaki kodda istream ve ostream'de operator bool fonksiyonu overload edilmiş ki 
+    lojik bağlamda kullanabildik:
+
+        #include <iostream>
+
+        int main()
+        {
+            using namespace std;
+
+            int x;
+
+            while (cin >> x)
+                cout << x;
+
+            return 0;
+        }
+
+---------------------------------------------------------------
+
+    Enumaration Type overload edilebilir
+
+        #include <iostream>
+
+        enum class Weekday {
+            Sunday, Monday, Tuesday, Wednesday, Thursday, Friday, Saturday
+        };
+
+        // Weekday türünden bir nesnesinin ++ olmasıyla sonraki güne geçmesi 
+        // güzel bir kullanım olabilir.
+
+        std::ostream& operator<<(std::ostream& os, const Weekday& wd)
+        {
+            constexpr const char* wdays[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+            return os << wdays[static_cast<int>(wd)];
+        }
+
+        Weekday& operator++(Weekday& wd) //prefix
+        {
+            return wd = (wd == Weekday::Saturday) ? Weekday::Sunday : static_cast<Weekday>(static_cast<int>(wd) + 1); 
+        }
+
+        Weekday& operator++(Weekday& wd, int) //postfix
+        {
+            auto ret = wd;
+            ++wd;   // burada prefix ++'ya çağrı yapmış olduk.
+            return ret;
+        }
+
+        Weekday& operator--(Weekday& wd) //prefix --
+        {
+            return wd = (wd == Weekday::Sunday) ? Weekday::Saturday : static_cast<Weekday>(static_cast<int>(wd) - 1); 
+        }
+
+        Weekday& operator--(Weekday& wd, int) //postfix --
+        {
+            auto ret = wd;
+            --wd;   // burada prefix --'ya çağrı yapmış olduk.
+            return ret;
+        }
+
+        int main() 
+        {
+            Weekday wd = Weekday::Monday;
+
+            std::cout << wd << '\n';
+
+            for (int i = 0; i < 30 ; ++i)
+            {
+                std::cout << ++wd;
+                (void)getchar();
+            }
+        }
+
+---------------------------------------------------------------
+
+40. dk
+
+
 
 
 
