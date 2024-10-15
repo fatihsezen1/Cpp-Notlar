@@ -3236,8 +3236,50 @@ Tür dönüştürme operator fonksiyonları:
 
 ---------------------------------------------------------------
 
-40. dk
+-----------------------------------------------------------------------------
+new ve delete
 
+new Date;
+bu ifadenin turu ne? -> Date*
+
+peki arka planda ne oluyor?
+-Derleyici bir new ifadesi ile karsilastiginda operator new'e cagri yapiyor.
+-operator new'e direkt cagri yapabilirsin.
+-malloc basarisizsa null pointer dondurur. 
+-operator new basarisizsa excception throw edecek.
+-operator new basariliysa derleyici urettigi kodda operator new'den aldigi
+adresi this pointer olacak sekilde sinifin ctor'una cagri yapiyor.
+- new Date; -> default initialize edilmis date ctor cagrilacak.
+- operator new'in parametrik yapisi malloc ile benziyor:
+
+	void* operator new(std::size_t);
+	void* malloc(size_t);
+
+
+-   profesyonel duzeyde new yerine dinamic omurlu nesnelerin kontrolu icin 
+	(daha kolay kullanmak, daha kolay manufile etmek, paylasimla ilgili problemler olmasin, 
+	hayatinin bitmesini saglamak icin) vs dinamik omurlu nesneleri kullaniriz.
+
+- new != operator new
+- delete != operator delete
+ new ve delete birer operator ama operator new ve operator delete birer fonksiyon.
+
+ -delete p; dedigimizde derleyici sinifin destructorunu cagriyor.
+
+	delete p;	 
+	p->~Date();
+	operator delete(p);
+
+- yani new ifadesi tahsisat yapar + constructoru cagirir
+- delete ifadesi deallocation yapar + destructoru cagirir.
+
+- standart kutuphanenin operator new ve delete fonksiyonunu overload edebiliyoruz.
+
+- dinamik omurlu nesneleri delete etmezsen olacak tek sey sadece memory leakage degil.
+  hem memory leakage olacak. hem de destructor cagrilmadigi icin resource leak.
+  operator delete fonksiyonu ve destructor cagrilmamis olur.
+
+  Bir diger problem de dangling pointer olusur.
 
 
 
