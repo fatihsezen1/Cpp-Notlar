@@ -3112,10 +3112,17 @@ cout << "x = " << x << '\n';    // 11 basar
 --------------------------------------------------------------------------------------------------------------------------------------------
 ##17. Ders##
 
+Tür dönüştürme operator fonksiyonları:
 
-deneme commiti
+- operator <hedef_tür> (); şeklinde yazılıyordu. 
+- g.d.d. türü yazılmıyor çünkü hedef_tür aynı zamanda g.d.d. türü oluyordu.
+- tür dönüştürme operator fonksiyonları da explicit olabiliyor. Örtülü dönüştürmeyi 
+  engellemek için.
 
-
+    class Myclass {
+    public:
+        explicit operator int();
+    }
 
 
 
